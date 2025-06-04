@@ -18,7 +18,7 @@ class ZimDonations_Analytics {
      * Constructor
      */
     public function __construct() {
-        $this->db = new ZimDonations_DB();
+        $this->db = new HelpMeDonations_DB();
         $this->init_hooks();
     }
 
