@@ -1,47 +1,103 @@
 <?php
 /**
- * Installation and database setup
+ * Installation and activation for Help Me Donations
  */
 
 if (!defined('ABSPATH')) {
     exit;
 }
 
-class ZimDonations_Install {
+class HelpMeDonations_Install {
 
     /**
      * Plugin activation
      */
     public static function activate() {
+        // Check requirements
+        if (!self::check_requirements()) {
+            deactivate_plugins(HELPME_DONATIONS_PLUGIN_BASENAME);
+            wp_die(__('Help Me Donations plugin requirements not met. Please ensure you have PHP 7.4+ and WordPress 5.0+.', 'helpme-donations'));
+        }
+
+        // Create database tables
         self::create_tables();
-        self::create_options();
+
+        // Set default options
+        self::set_default_options();
+
+        // Create default form
+        self::create_default_form();
+
+        // Create pages
         self::create_pages();
-        self::schedule_events();
+
+        // Schedule cron jobs
+        self::schedule_cron_jobs();
+
+        // Set activation flag
+        update_option('helpme_donations_activated', true);
 
         // Flush rewrite rules
         flush_rewrite_rules();
-
-        // Set activation flag
-        update_option('zim_donations_activated', true);
     }
 
     /**
      * Plugin deactivation
      */
     public static function deactivate() {
-        self::clear_scheduled_events();
+        // Clear scheduled cron jobs
+        wp_clear_scheduled_hook('helpme_donations_process_recurring');
+        wp_clear_scheduled_hook('helpme_donations_cleanup_temp_data');
+
+        // Flush rewrite rules
         flush_rewrite_rules();
+
+        // Remove activation flag
+        delete_option('helpme_donations_activated');
     }
 
     /**
      * Plugin uninstall
      */
     public static function uninstall() {
-        if (get_option('zim_donations_delete_data_on_uninstall')) {
-            self::delete_tables();
-            self::delete_options();
-            self::delete_pages();
+        // Check if we should remove data
+        $remove_data = get_option('helpme_donations_remove_data_on_uninstall', false);
+
+        if ($remove_data) {
+            // Drop database tables
+            self::drop_tables();
+
+            // Remove all plugin options
+            self::remove_plugin_options();
+
+            // Remove uploaded files
+            self::remove_uploaded_files();
         }
+    }
+
+    /**
+     * Check plugin requirements
+     */
+    private static function check_requirements() {
+        // Check PHP version
+        if (version_compare(PHP_VERSION, HELPME_DONATIONS_MIN_PHP_VERSION, '<')) {
+            return false;
+        }
+
+        // Check WordPress version
+        if (version_compare(get_bloginfo('version'), HELPME_DONATIONS_MIN_WP_VERSION, '<')) {
+            return false;
+        }
+
+        // Check for required PHP extensions
+        $required_extensions = array('curl', 'json');
+        foreach ($required_extensions as $extension) {
+            if (!extension_loaded($extension)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
@@ -52,311 +108,195 @@ class ZimDonations_Install {
 
         $charset_collate = $wpdb->get_charset_collate();
 
-        // Donations table
-        $donations_table = $wpdb->prefix . 'zim_donations';
-        $donations_sql = "CREATE TABLE $donations_table (
-            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-            campaign_id bigint(20) unsigned DEFAULT 0,
-            form_id bigint(20) unsigned DEFAULT 0,
-            donor_email varchar(100) NOT NULL,
-            donor_name varchar(100) NOT NULL,
-            donor_phone varchar(20) DEFAULT '',
-            donor_address text DEFAULT '',
-            amount decimal(10,2) NOT NULL,
-            currency varchar(3) NOT NULL DEFAULT 'USD',
-            gateway varchar(50) NOT NULL,
-            transaction_id varchar(100) DEFAULT '',
-            gateway_transaction_id varchar(100) DEFAULT '',
-            status varchar(20) NOT NULL DEFAULT 'pending',
-            is_recurring tinyint(1) DEFAULT 0,
-            recurring_interval varchar(20) DEFAULT '',
-            next_payment_date datetime DEFAULT NULL,
-            anonymous tinyint(1) DEFAULT 0,
-            donor_message text DEFAULT '',
-            gateway_response text DEFAULT '',
-            created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-            PRIMARY KEY (id),
-            KEY campaign_id (campaign_id),
-            KEY donor_email (donor_email),
-            KEY status (status),
-            KEY gateway (gateway),
-            KEY created_at (created_at)
-        ) $charset_collate;";
+        // Only create tables if they don't exist
+        $donations_table = $wpdb->prefix . 'helpme_donations';
+        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$donations_table'") === $donations_table;
+        
+        if (!$table_exists) {
+            // Donations table
+            $donations_sql = "CREATE TABLE $donations_table (
+                id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+                donation_id varchar(50) NOT NULL UNIQUE,
+                campaign_id bigint(20) unsigned DEFAULT 0,
+                form_id bigint(20) unsigned DEFAULT 0,
+                donor_id bigint(20) unsigned DEFAULT 0,
+                amount decimal(15,2) NOT NULL,
+                currency varchar(3) NOT NULL DEFAULT 'USD',
+                gateway varchar(50) NOT NULL,
+                gateway_transaction_id varchar(100) DEFAULT NULL,
+                status varchar(20) NOT NULL DEFAULT 'pending',
+                is_recurring tinyint(1) DEFAULT 0,
+                recurring_interval varchar(20) DEFAULT NULL,
+                parent_donation_id bigint(20) unsigned DEFAULT NULL,
+                anonymous tinyint(1) DEFAULT 0,
+                donor_name varchar(255) NOT NULL,
+                donor_email varchar(255) NOT NULL,
+                donor_phone varchar(50) DEFAULT NULL,
+                donor_address text DEFAULT NULL,
+                donor_message text DEFAULT NULL,
+                metadata text DEFAULT NULL,
+                created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                completed_at datetime DEFAULT NULL,
+                PRIMARY KEY (id),
+                UNIQUE KEY donation_id (donation_id),
+                KEY campaign_id (campaign_id),
+                KEY donor_id (donor_id),
+                KEY status (status),
+                KEY gateway (gateway),
+                KEY created_at (created_at)
+            ) $charset_collate;";
 
-        // Campaigns table
-        $campaigns_table = $wpdb->prefix . 'zim_campaigns';
-        $campaigns_sql = "CREATE TABLE $campaigns_table (
-            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-            title varchar(200) NOT NULL,
-            description text DEFAULT '',
-            goal_amount decimal(10,2) DEFAULT 0,
-            currency varchar(3) NOT NULL DEFAULT 'USD',
-            start_date datetime DEFAULT NULL,
-            end_date datetime DEFAULT NULL,
-            status varchar(20) NOT NULL DEFAULT 'active',
-            category varchar(50) DEFAULT '',
-            image_url varchar(500) DEFAULT '',
-            video_url varchar(500) DEFAULT '',
-            slug varchar(200) NOT NULL,
-            settings text DEFAULT '',
-            created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-            PRIMARY KEY (id),
-            UNIQUE KEY slug (slug),
-            KEY status (status),
-            KEY category (category),
-            KEY start_date (start_date),
-            KEY end_date (end_date)
-        ) $charset_collate;";
-
-        // Donors table
-        $donors_table = $wpdb->prefix . 'zim_donors';
-        $donors_sql = "CREATE TABLE $donors_table (
-            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-            email varchar(100) NOT NULL,
-            name varchar(100) NOT NULL,
-            phone varchar(20) DEFAULT '',
-            address text DEFAULT '',
-            total_donated decimal(10,2) DEFAULT 0,
-            donation_count int(11) DEFAULT 0,
-            first_donation_date datetime DEFAULT NULL,
-            last_donation_date datetime DEFAULT NULL,
-            preferences text DEFAULT '',
-            created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-            PRIMARY KEY (id),
-            UNIQUE KEY email (email),
-            KEY name (name),
-            KEY total_donated (total_donated),
-            KEY donation_count (donation_count)
-        ) $charset_collate;";
-
-        // Transaction logs table
-        $transactions_table = $wpdb->prefix . 'zim_transactions';
-        $transactions_sql = "CREATE TABLE $transactions_table (
-            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-            donation_id bigint(20) unsigned NOT NULL,
-            gateway varchar(50) NOT NULL,
-            transaction_type varchar(50) NOT NULL,
-            amount decimal(10,2) NOT NULL,
-            currency varchar(3) NOT NULL,
-            gateway_transaction_id varchar(100) DEFAULT '',
-            status varchar(20) NOT NULL,
-            gateway_response text DEFAULT '',
-            notes text DEFAULT '',
-            created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            PRIMARY KEY (id),
-            KEY donation_id (donation_id),
-            KEY gateway (gateway),
-            KEY transaction_type (transaction_type),
-            KEY status (status),
-            KEY created_at (created_at)
-        ) $charset_collate;";
-
-        // Forms table
-        $forms_table = $wpdb->prefix . 'zim_forms';
-        $forms_sql = "CREATE TABLE $forms_table (
-            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-            name varchar(100) NOT NULL,
-            description text DEFAULT '',
-            form_fields text NOT NULL,
-            styling text DEFAULT '',
-            settings text DEFAULT '',
-            status varchar(20) NOT NULL DEFAULT 'active',
-            created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-            PRIMARY KEY (id),
-            KEY name (name),
-            KEY status (status)
-        ) $charset_collate;";
-
-        // Currency rates table
-        $rates_table = $wpdb->prefix . 'zim_currency_rates';
-        $rates_sql = "CREATE TABLE $rates_table (
-            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-            from_currency varchar(3) NOT NULL,
-            to_currency varchar(3) NOT NULL,
-            rate decimal(10,6) NOT NULL,
-            source varchar(50) DEFAULT 'manual',
-            updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-            PRIMARY KEY (id),
-            UNIQUE KEY currency_pair (from_currency, to_currency),
-            KEY updated_at (updated_at)
-        ) $charset_collate;";
-
-        require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
-
-        dbDelta($donations_sql);
-        dbDelta($campaigns_sql);
-        dbDelta($donors_sql);
-        dbDelta($transactions_sql);
-        dbDelta($forms_table);
-        dbDelta($rates_sql);
+            require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+            dbDelta($donations_sql);
+        }
 
         // Update database version
-        update_option('zim_donations_db_version', HELPME_DONATIONS_DB_VERSION);
+        update_option('helpme_donations_db_version', HELPME_DONATIONS_DB_VERSION);
     }
 
     /**
-     * Create default options
+     * Set default plugin options
      */
-    private static function create_options() {
+    private static function set_default_options() {
         $default_options = array(
-            'zim_donations_default_currency' => 'USD',
-            'zim_donations_test_mode' => 1,
-            'zim_donations_email_notifications' => 1,
-            'zim_donations_admin_email' => get_option('admin_email'),
-            'zim_donations_success_page' => 0,
-            'zim_donations_cancel_page' => 0,
-            'zim_donations_terms_page' => 0,
-            'zim_donations_privacy_page' => 0,
-            'zim_donations_delete_data_on_uninstall' => 0,
-            'zim_donations_currency_update_frequency' => 'daily',
-            'zim_donations_minimum_amount' => 1,
-            'zim_donations_maximum_amount' => 10000,
-            'zim_donations_enabled_gateways' => array('stripe', 'paypal'),
-            'zim_donations_default_amounts' => '10,25,50,100,250',
-            'zim_donations_allow_custom_amounts' => 1,
-            'zim_donations_allow_recurring' => 1,
-            'zim_donations_allow_anonymous' => 1,
-            'zim_donations_gdpr_compliance' => 1,
-            'zim_donations_data_retention_days' => 2555, // 7 years
+            // General settings
+            'helpme_donations_default_currency' => 'USD',
+            'helpme_donations_minimum_amount' => 1,
+            'helpme_donations_maximum_amount' => 10000,
+            'helpme_donations_test_mode' => true,
+            'helpme_donations_remove_data_on_uninstall' => false,
+
+            // Email settings
+            'helpme_donations_admin_email' => get_option('admin_email'),
+            'helpme_donations_from_email' => get_option('admin_email'),
+            'helpme_donations_from_name' => get_bloginfo('name'),
+            'helpme_donations_send_admin_notifications' => true,
+            'helpme_donations_send_donor_confirmations' => true,
+
+            // Payment gateway settings
+            'helpme_donations_enabled_gateways' => array(),
+
+            // Stripe settings
+            'helpme_donations_stripe_enabled' => false,
+            'helpme_donations_stripe_test_publishable_key' => '',
+            'helpme_donations_stripe_test_secret_key' => '',
+            'helpme_donations_stripe_live_publishable_key' => '',
+            'helpme_donations_stripe_live_secret_key' => '',
+
+            // PayPal settings
+            'helpme_donations_paypal_enabled' => false,
+            'helpme_donations_paypal_test_client_id' => '',
+            'helpme_donations_paypal_test_client_secret' => '',
+            'helpme_donations_paypal_live_client_id' => '',
+            'helpme_donations_paypal_live_client_secret' => '',
+
+            // Paynow settings
+            'helpme_donations_paynow_enabled' => false,
+            'helpme_donations_paynow_integration_id' => '',
+            'helpme_donations_paynow_integration_key' => '',
+
+            // InBucks settings
+            'helpme_donations_inbucks_enabled' => false,
+            'helpme_donations_inbucks_api_key' => '',
+            'helpme_donations_inbucks_secret_key' => '',
+
+            // ZimSwitch settings
+            'helpme_donations_zimswitch_enabled' => false,
+            'helpme_donations_zimswitch_merchant_id' => '',
+            'helpme_donations_zimswitch_api_key' => '',
+
+            // Form settings
+            'helpme_donations_enable_anonymous_donations' => true,
+            'helpme_donations_enable_recurring_donations' => true,
+            'helpme_donations_require_terms_acceptance' => false,
+            'helpme_donations_terms_page' => 0,
+
+            // Style settings
+            'helpme_donations_primary_color' => '#007cba',
+            'helpme_donations_secondary_color' => '#666666',
+            'helpme_donations_button_color' => '#007cba',
+            'helpme_donations_font_family' => 'inherit'
         );
 
-        foreach ($default_options as $option => $value) {
-            if (get_option($option) === false) {
-                add_option($option, $value);
-            }
-        }
-
-        // Gateway-specific options
-        $gateway_options = array(
-            // Stripe
-            'zim_donations_stripe_enabled' => 0,
-            'zim_donations_stripe_publishable_key' => '',
-            'zim_donations_stripe_secret_key' => '',
-            'zim_donations_stripe_webhook_secret' => '',
-
-            // PayPal
-            'zim_donations_paypal_enabled' => 0,
-            'zim_donations_paypal_client_id' => '',
-            'zim_donations_paypal_client_secret' => '',
-            'zim_donations_paypal_webhook_id' => '',
-
-            // Paynow
-            'zim_donations_paynow_enabled' => 0,
-            'zim_donations_paynow_integration_id' => '',
-            'zim_donations_paynow_integration_key' => '',
-
-            // InBucks
-            'zim_donations_inbucks_enabled' => 0,
-            'zim_donations_inbucks_api_key' => '',
-            'zim_donations_inbucks_secret_key' => '',
-
-            // ZimSwitch
-            'zim_donations_zimswitch_enabled' => 0,
-            'zim_donations_zimswitch_merchant_id' => '',
-            'zim_donations_zimswitch_api_key' => '',
-        );
-
-        foreach ($gateway_options as $option => $value) {
-            if (get_option($option) === false) {
-                add_option($option, $value);
+        foreach ($default_options as $option_name => $default_value) {
+            if (get_option($option_name) === false) {
+                update_option($option_name, $default_value);
             }
         }
     }
 
     /**
-     * Create default pages
+     * Create default donation form
+     */
+    private static function create_default_form() {
+        // For now, we'll skip creating database forms since the table might not exist
+        // The form builder will handle default forms programmatically
+    }
+
+    /**
+     * Schedule cron jobs
+     */
+    private static function schedule_cron_jobs() {
+        // Process recurring donations daily
+        if (!wp_next_scheduled('helpme_donations_process_recurring')) {
+            wp_schedule_event(time(), 'daily', 'helpme_donations_process_recurring');
+        }
+
+        // Cleanup temporary data weekly
+        if (!wp_next_scheduled('helpme_donations_cleanup_temp_data')) {
+            wp_schedule_event(time(), 'weekly', 'helpme_donations_cleanup_temp_data');
+        }
+    }
+
+    /**
+     * Create pages
      */
     private static function create_pages() {
         $pages = array(
-            'donation_success' => array(
-                'title' => __('Donation Successful', 'zim-donations'),
-                'content' => __('Thank you for your generous donation! Your contribution makes a difference.', 'zim-donations'),
-                'option' => 'zim_donations_success_page'
+            'donation-success' => array(
+                'title' => 'Donation Success',
+                'content' => '[helpme_donation_success]',
+                'option' => 'helpme_donations_success_page'
             ),
-            'donation_cancelled' => array(
-                'title' => __('Donation Cancelled', 'zim-donations'),
-                'content' => __('Your donation was cancelled. You can try again anytime.', 'zim-donations'),
-                'option' => 'zim_donations_cancel_page'
-            ),
-            'privacy_policy' => array(
-                'title' => __('Donation Privacy Policy', 'zim-donations'),
-                'content' => self::get_privacy_policy_content(),
-                'option' => 'zim_donations_privacy_page'
-            ),
-            'terms_conditions' => array(
-                'title' => __('Donation Terms & Conditions', 'zim-donations'),
-                'content' => self::get_terms_content(),
-                'option' => 'zim_donations_terms_page'
+            'donation-cancelled' => array(
+                'title' => 'Donation Cancelled',
+                'content' => 'Your donation was cancelled.',
+                'option' => 'helpme_donations_cancelled_page'
             )
         );
 
-        foreach ($pages as $slug => $page_data) {
-            $existing_page = get_option($page_data['option']);
-
+        foreach ($pages as $slug => $page) {
+            $existing_page = get_option($page['option']);
+            
             if (!$existing_page || !get_post($existing_page)) {
                 $page_id = wp_insert_post(array(
-                    'post_title' => $page_data['title'],
-                    'post_content' => $page_data['content'],
+                    'post_title' => $page['title'],
+                    'post_content' => $page['content'],
                     'post_status' => 'publish',
                     'post_type' => 'page',
-                    'post_name' => $slug,
-                    'comment_status' => 'closed',
-                    'ping_status' => 'closed'
+                    'post_name' => $slug
                 ));
 
                 if ($page_id && !is_wp_error($page_id)) {
-                    update_option($page_data['option'], $page_id);
+                    update_option($page['option'], $page_id);
                 }
             }
         }
     }
 
     /**
-     * Schedule recurring events
+     * Drop database tables
      */
-    private static function schedule_events() {
-        // Schedule currency rate updates
-        if (!wp_next_scheduled('zim_donations_update_currency_rates')) {
-            wp_schedule_event(time(), 'daily', 'zim_donations_update_currency_rates');
-        }
-
-        // Schedule recurring donation processing
-        if (!wp_next_scheduled('zim_donations_process_recurring')) {
-            wp_schedule_event(time(), 'daily', 'zim_donations_process_recurring');
-        }
-
-        // Schedule cleanup old data
-        if (!wp_next_scheduled('zim_donations_cleanup_data')) {
-            wp_schedule_event(time(), 'weekly', 'zim_donations_cleanup_data');
-        }
-    }
-
-    /**
-     * Clear scheduled events
-     */
-    private static function clear_scheduled_events() {
-        wp_clear_scheduled_hook('zim_donations_update_currency_rates');
-        wp_clear_scheduled_hook('zim_donations_process_recurring');
-        wp_clear_scheduled_hook('zim_donations_cleanup_data');
-    }
-
-    /**
-     * Delete database tables
-     */
-    private static function delete_tables() {
+    private static function drop_tables() {
         global $wpdb;
 
         $tables = array(
-            $wpdb->prefix . 'zim_donations',
-            $wpdb->prefix . 'zim_campaigns',
-            $wpdb->prefix . 'zim_donors',
-            $wpdb->prefix . 'zim_transactions',
-            $wpdb->prefix . 'zim_forms',
-            $wpdb->prefix . 'zim_currency_rates'
+            $wpdb->prefix . 'helpme_donations',
+            $wpdb->prefix . 'helpme_campaigns',
+            $wpdb->prefix . 'helpme_donors',
+            $wpdb->prefix . 'helpme_transactions',
+            $wpdb->prefix . 'helpme_forms'
         );
 
         foreach ($tables as $table) {
@@ -365,91 +305,69 @@ class ZimDonations_Install {
     }
 
     /**
-     * Delete plugin options
+     * Remove all plugin options
      */
-    private static function delete_options() {
+    private static function remove_plugin_options() {
         global $wpdb;
 
-        // Delete all plugin options
+        // Get all plugin options
+        $options = $wpdb->get_results(
+            "SELECT option_name FROM {$wpdb->options} WHERE option_name LIKE 'helpme_donations_%'"
+        );
+
+        // Delete each option
+        foreach ($options as $option) {
+            delete_option($option->option_name);
+        }
+
+        // Remove transients
         $wpdb->query(
-            "DELETE FROM {$wpdb->options} WHERE option_name LIKE 'zim_donations_%'"
+            "DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_helpme_donations_%' OR option_name LIKE '_transient_timeout_helpme_donations_%'"
         );
     }
 
     /**
-     * Delete created pages
+     * Remove uploaded files
      */
-    private static function delete_pages() {
-        $page_options = array(
-            'zim_donations_success_page',
-            'zim_donations_cancel_page',
-            'zim_donations_privacy_page',
-            'zim_donations_terms_page'
-        );
+    private static function remove_uploaded_files() {
+        $upload_dir = wp_upload_dir();
+        $plugin_upload_dir = $upload_dir['basedir'] . '/helpme-donations';
 
-        foreach ($page_options as $option) {
-            $page_id = get_option($option);
-            if ($page_id) {
-                wp_delete_post($page_id, true);
-                delete_option($option);
-            }
+        if (is_dir($plugin_upload_dir)) {
+            self::remove_directory_recursive($plugin_upload_dir);
         }
     }
 
     /**
-     * Get privacy policy content
+     * Recursively remove directory
      */
-    private static function get_privacy_policy_content() {
-        return '<h2>' . __('Information We Collect', 'zim-donations') . '</h2>
-        <p>' . __('When you make a donation, we collect the following information:', 'zim-donations') . '</p>
-        <ul>
-            <li>' . __('Personal information (name, email address, phone number)', 'zim-donations') . '</li>
-            <li>' . __('Billing information (address for tax receipts)', 'zim-donations') . '</li>
-            <li>' . __('Donation amount and payment method', 'zim-donations') . '</li>
-            <li>' . __('Transaction details and payment processor information', 'zim-donations') . '</li>
-        </ul>
+    private static function remove_directory_recursive($dir) {
+        if (!is_dir($dir)) {
+            return;
+        }
+
+        $files = array_diff(scandir($dir), array('.', '..'));
         
-        <h2>' . __('How We Use Your Information', 'zim-donations') . '</h2>
-        <p>' . __('We use your information to:', 'zim-donations') . '</p>
-        <ul>
-            <li>' . __('Process your donation', 'zim-donations') . '</li>
-            <li>' . __('Send donation receipts and confirmations', 'zim-donations') . '</li>
-            <li>' . __('Provide updates on campaigns you\'ve supported', 'zim-donations') . '</li>
-            <li>' . __('Comply with legal and regulatory requirements', 'zim-donations') . '</li>
-        </ul>
-        
-        <h2>' . __('Data Protection', 'zim-donations') . '</h2>
-        <p>' . __('We implement appropriate security measures to protect your personal information. Payment processing is handled by secure, PCI-compliant payment processors.', 'zim-donations') . '</p>
-        
-        <h2>' . __('Your Rights', 'zim-donations') . '</h2>
-        <p>' . __('You have the right to access, update, or delete your personal information. Contact us to exercise these rights.', 'zim-donations') . '</p>';
+        foreach ($files as $file) {
+            $path = $dir . DIRECTORY_SEPARATOR . $file;
+            if (is_dir($path)) {
+                self::remove_directory_recursive($path);
+            } else {
+                unlink($path);
+            }
+        }
+
+        rmdir($dir);
     }
 
     /**
-     * Get terms and conditions content
+     * Database update check
      */
-    private static function get_terms_content() {
-        return '<h2>' . __('Donation Terms', 'zim-donations') . '</h2>
-        <p>' . __('By making a donation, you agree to the following terms:', 'zim-donations') . '</p>
+    public static function maybe_update_db() {
+        $current_version = get_option('helpme_donations_db_version', '0');
         
-        <h3>' . __('Donation Processing', 'zim-donations') . '</h3>
-        <ul>
-            <li>' . __('All donations are processed securely through our payment partners', 'zim-donations') . '</li>
-            <li>' . __('You will receive an email confirmation for your donation', 'zim-donations') . '</li>
-            <li>' . __('Donations are typically processed immediately', 'zim-donations') . '</li>
-        </ul>
-        
-        <h3>' . __('Refunds', 'zim-donations') . '</h3>
-        <p>' . __('Donations are generally non-refundable. In exceptional circumstances, please contact us to discuss your situation.', 'zim-donations') . '</p>
-        
-        <h3>' . __('Recurring Donations', 'zim-donations') . '</h3>
-        <ul>
-            <li>' . __('Recurring donations will be charged automatically at the specified interval', 'zim-donations') . '</li>
-            <li>' . __('You can cancel recurring donations at any time by contacting us', 'zim-donations') . '</li>
-            <li>' . __('Changes to recurring donations may take one billing cycle to take effect', 'zim-donations') . '</li>
-        </ul>
-        
-        <h3>' . __('Tax Receipts', 'zim-donations') . '</h3>
-        <p>' . __('Tax-deductible receipts will be provided where applicable according to local laws and regulations.', 'zim-donations') . '</p>';
+        if (version_compare($current_version, HELPME_DONATIONS_DB_VERSION, '<')) {
+            self::create_tables();
+        }
     }
 }
