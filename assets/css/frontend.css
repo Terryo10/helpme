@@ -1,0 +1,677 @@
+/**
+ * Frontend CSS for Zimbabwe Donations Plugin
+ */
+
+/* Base Form Styles */
+.zim-donation-form {
+    max-width: 600px;
+    margin: 0 auto;
+    background: #ffffff;
+    border: 1px solid #e1e1e1;
+    border-radius: 8px;
+    padding: 30px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.zim-donation-form h2 {
+    text-align: center;
+    margin-bottom: 10px;
+    color: #333333;
+    font-size: 28px;
+    font-weight: 600;
+}
+
+.zim-donation-form .form-description {
+    text-align: center;
+    margin-bottom: 30px;
+    color: #666666;
+    font-size: 16px;
+    line-height: 1.5;
+}
+
+/* Step Navigation */
+.zim-form-steps {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 30px;
+    position: relative;
+}
+
+.zim-form-steps::before {
+    content: '';
+    position: absolute;
+    top: 15px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: #e1e1e1;
+    z-index: 1;
+}
+
+.zim-step {
+    background: #ffffff;
+    border: 2px solid #e1e1e1;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: #999999;
+    position: relative;
+    z-index: 2;
+}
+
+.zim-step.active {
+    border-color: #007cba;
+    background: #007cba;
+    color: #ffffff;
+}
+
+.zim-step.completed {
+    border-color: #28a745;
+    background: #28a745;
+    color: #ffffff;
+}
+
+/* Form Sections */
+.zim-form-section {
+    display: none;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+.zim-form-section.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.zim-section-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: #333333;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+/* Amount Selection */
+.zim-amount-selection {
+    margin-bottom: 25px;
+}
+
+.zim-amount-buttons {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.zim-amount-button {
+    background: #f8f9fa;
+    border: 2px solid #e1e1e1;
+    border-radius: 6px;
+    padding: 15px 10px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+}
+
+.zim-amount-button:hover {
+    background: #e9ecef;
+    border-color: #007cba;
+}
+
+.zim-amount-button.selected {
+    background: #007cba;
+    border-color: #007cba;
+    color: #ffffff;
+}
+
+.zim-custom-amount {
+    margin-top: 15px;
+}
+
+.zim-custom-amount input {
+    width: 100%;
+    padding: 12px 15px;
+    border: 2px solid #e1e1e1;
+    border-radius: 6px;
+    font-size: 16px;
+    transition: border-color 0.3s ease;
+}
+
+.zim-custom-amount input:focus {
+    outline: none;
+    border-color: #007cba;
+    box-shadow: 0 0 0 3px rgba(0, 124, 186, 0.1);
+}
+
+/* Recurring Options */
+.zim-recurring-options {
+    margin-bottom: 25px;
+}
+
+.zim-recurring-toggle {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.zim-recurring-toggle input[type="checkbox"] {
+    margin-right: 10px;
+    transform: scale(1.2);
+}
+
+.zim-recurring-interval {
+    display: none;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 10px;
+}
+
+.zim-recurring-interval.show {
+    display: grid;
+}
+
+.zim-interval-option {
+    background: #f8f9fa;
+    border: 2px solid #e1e1e1;
+    border-radius: 6px;
+    padding: 10px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.zim-interval-option:hover,
+.zim-interval-option.selected {
+    background: #007cba;
+    border-color: #007cba;
+    color: #ffffff;
+}
+
+/* Form Fields */
+.zim-form-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.zim-form-row.two-columns {
+    grid-template-columns: 1fr 1fr;
+}
+
+.zim-form-group {
+    margin-bottom: 20px;
+}
+
+.zim-form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #333333;
+}
+
+.zim-form-group input,
+.zim-form-group select,
+.zim-form-group textarea {
+    width: 100%;
+    padding: 12px 15px;
+    border: 2px solid #e1e1e1;
+    border-radius: 6px;
+    font-size: 16px;
+    transition: border-color 0.3s ease;
+    box-sizing: border-box;
+}
+
+.zim-form-group input:focus,
+.zim-form-group select:focus,
+.zim-form-group textarea:focus {
+    outline: none;
+    border-color: #007cba;
+    box-shadow: 0 0 0 3px rgba(0, 124, 186, 0.1);
+}
+
+.zim-form-group textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+.zim-form-group .help-text {
+    font-size: 14px;
+    color: #666666;
+    margin-top: 5px;
+}
+
+/* Payment Method Selection */
+.zim-payment-methods {
+    margin-bottom: 25px;
+}
+
+.zim-payment-method {
+    border: 2px solid #e1e1e1;
+    border-radius: 6px;
+    margin-bottom: 10px;
+    overflow: hidden;
+    transition: border-color 0.3s ease;
+}
+
+.zim-payment-method:hover {
+    border-color: #007cba;
+}
+
+.zim-payment-method.selected {
+    border-color: #007cba;
+    background: #f8fcff;
+}
+
+.zim-payment-header {
+    padding: 15px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.zim-payment-info {
+    display: flex;
+    align-items: center;
+}
+
+.zim-payment-logo {
+    width: 40px;
+    height: 40px;
+    margin-right: 15px;
+    border-radius: 4px;
+    background: #f8f9fa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: #333333;
+}
+
+.zim-payment-details h4 {
+    margin: 0 0 5px 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #333333;
+}
+
+.zim-payment-details p {
+    margin: 0;
+    font-size: 14px;
+    color: #666666;
+}
+
+.zim-payment-radio {
+    transform: scale(1.2);
+}
+
+.zim-payment-form {
+    padding: 20px;
+    background: #f8fcff;
+    border-top: 1px solid #e1e1e1;
+    display: none;
+}
+
+.zim-payment-method.selected .zim-payment-form {
+    display: block;
+}
+
+/* Buttons */
+.zim-form-navigation {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #e1e1e1;
+}
+
+.zim-btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 120px;
+}
+
+.zim-btn-primary {
+    background: #007cba;
+    color: #ffffff;
+}
+
+.zim-btn-primary:hover {
+    background: #005a87;
+}
+
+.zim-btn-secondary {
+    background: #6c757d;
+    color: #ffffff;
+}
+
+.zim-btn-secondary:hover {
+    background: #545b62;
+}
+
+.zim-btn:disabled {
+    background: #e9ecef;
+    color: #6c757d;
+    cursor: not-allowed;
+}
+
+.zim-btn-loading {
+    position: relative;
+}
+
+.zim-btn-loading::after {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    margin: auto;
+    border: 2px solid transparent;
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    animation: spin 1s ease infinite;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* Campaign Progress */
+.zim-campaign-progress {
+    background: #ffffff;
+    border: 1px solid #e1e1e1;
+    border-radius: 8px;
+    padding: 25px;
+    margin-bottom: 25px;
+}
+
+.zim-progress-header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.zim-progress-header h3 {
+    margin: 0 0 10px 0;
+    font-size: 24px;
+    color: #333333;
+}
+
+.zim-progress-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.zim-progress-stat {
+    text-align: center;
+}
+
+.zim-progress-stat .number {
+    font-size: 24px;
+    font-weight: bold;
+    color: #007cba;
+    display: block;
+}
+
+.zim-progress-stat .label {
+    font-size: 14px;
+    color: #666666;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.zim-progress-bar {
+    background: #e1e1e1;
+    border-radius: 10px;
+    height: 20px;
+    overflow: hidden;
+    margin-bottom: 15px;
+    position: relative;
+}
+
+.zim-progress-fill {
+    background: linear-gradient(90deg, #007cba, #0056b3);
+    height: 100%;
+    border-radius: 10px;
+    transition: width 0.5s ease;
+    position: relative;
+}
+
+.zim-progress-percentage {
+    text-align: center;
+    font-weight: bold;
+    color: #333333;
+    margin-top: 10px;
+}
+
+/* Recent Donations */
+.zim-recent-donations {
+    background: #ffffff;
+    border: 1px solid #e1e1e1;
+    border-radius: 8px;
+    padding: 25px;
+}
+
+.zim-recent-donations h3 {
+    margin: 0 0 20px 0;
+    font-size: 20px;
+    color: #333333;
+    text-align: center;
+}
+
+.zim-donation-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 0;
+    border-bottom: 1px solid #f1f1f1;
+}
+
+.zim-donation-item:last-child {
+    border-bottom: none;
+}
+
+.zim-donor-info {
+    display: flex;
+    align-items: center;
+}
+
+.zim-donor-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #007cba;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    margin-right: 15px;
+}
+
+.zim-donor-details h4 {
+    margin: 0 0 5px 0;
+    font-size: 16px;
+    color: #333333;
+}
+
+.zim-donor-details .date {
+    font-size: 14px;
+    color: #666666;
+}
+
+.zim-donation-amount {
+    font-size: 18px;
+    font-weight: bold;
+    color: #28a745;
+}
+
+/* Messages */
+.zim-message {
+    padding: 15px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    font-weight: 500;
+}
+
+.zim-message-success {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.zim-message-error {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.zim-message-info {
+    background: #d1ecf1;
+    color: #0c5460;
+    border: 1px solid #bee5eb;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .zim-donation-form {
+        padding: 20px;
+        margin: 10px;
+    }
+
+    .zim-form-row.two-columns {
+        grid-template-columns: 1fr;
+    }
+
+    .zim-amount-buttons {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .zim-progress-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .zim-form-navigation {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .zim-donation-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .zim-amount-buttons {
+        grid-template-columns: 1fr;
+    }
+
+    .zim-progress-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .zim-donation-form h2 {
+        font-size: 24px;
+    }
+}
+
+/* Loading States */
+.zim-loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.zim-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #007cba;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-right: 10px;
+}
+
+/* Accessibility */
+.zim-sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* Focus indicators */
+.zim-amount-button:focus,
+.zim-interval-option:focus,
+.zim-payment-header:focus {
+    outline: 2px solid #007cba;
+    outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .zim-donation-form {
+        border-color: #000000;
+    }
+
+    .zim-form-group input,
+    .zim-form-group select,
+    .zim-form-group textarea {
+        border-color: #000000;
+    }
+
+    .zim-btn-primary {
+        background: #000000;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+
+    .zim-form-section,
+    .zim-amount-button,
+    .zim-btn,
+    .zim-progress-fill {
+        transition: none;
+        animation: none;
+    }
+}
