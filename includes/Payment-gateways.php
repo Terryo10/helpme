@@ -7,6 +7,8 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+require_once HELPME_DONATIONS_PLUGIN_DIR . 'includes/gateways/class-zimswitch.php';
+
 class ZimDonations_Payment_Gateways {
 
     /**
@@ -31,7 +33,7 @@ class ZimDonations_Payment_Gateways {
             'paypal' => new ZimDonations_Gateway_PayPal(),
             'paynow' => new ZimDonations_Gateway_Paynow(),
             'inbucks' => new ZimDonations_Gateway_InBucks(),
-            'zimswitch' => new ZimDonations_Gateway_ZimSwitch()
+            'zimswitch' => new HelpMeDonations_Gateway_ZimSwitch()
         );
 
         // Filter available gateways

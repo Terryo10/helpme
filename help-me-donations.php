@@ -90,7 +90,7 @@ final class HelpMeDonations {
 
         // Admin classes
         if (is_admin()) {
-            require_once HELPME_DONATIONS_PLUGIN_DIR . 'includes/admin/class-admin.php';
+            require_once HELPME_DONATIONS_PLUGIN_DIR . 'includes/admin/admin.php';
         }
 
         // Payment gateway classes - only if core is loaded
