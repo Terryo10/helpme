@@ -170,7 +170,7 @@ final class HelpMeDonations {
 
             // Initialize admin
             if (is_admin() && class_exists('ZimDonations_Admin')) {
-                new ZimDonations_Admin();
+                new HelpMeDonations_Admin();
             }
 
             do_action('helpme_donations_loaded');
