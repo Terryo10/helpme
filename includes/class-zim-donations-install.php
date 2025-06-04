@@ -15,19 +15,21 @@ class HelpMeDonations_Install {
     public static function activate() {
         // Check requirements
         if (!self::check_requirements()) {
-            deactivate_plugins(plugin_basename(__FILE__));
+            deactivate_plugins(HELPME_DONATIONS_PLUGIN_BASENAME);
             wp_die(__('Help Me Donations plugin requirements not met.', 'helpme-donations'));
         }
 
         // Create database tables
-        $db = new HelpMeDonations_DB();
-        $db->create_tables();
+        self::create_tables();
 
         // Set default options
         self::set_default_options();
 
         // Create default form
         self::create_default_form();
+
+        // Create pages
+        self::create_pages();
 
         // Schedule cron jobs
         self::schedule_cron_jobs();
@@ -63,8 +65,7 @@ class HelpMeDonations_Install {
 
         if ($remove_data) {
             // Drop database tables
-            $db = new HelpMeDonations_DB();
-            $db->drop_tables();
+            self::drop_tables();
 
             // Remove all plugin options
             self::remove_plugin_options();
@@ -89,7 +90,7 @@ class HelpMeDonations_Install {
         }
 
         // Check for required PHP extensions
-        $required_extensions = array('curl', 'json', 'openssl');
+        $required_extensions = array('curl', 'json');
         foreach ($required_extensions as $extension) {
             if (!extension_loaded($extension)) {
                 return false;
@@ -97,6 +98,150 @@ class HelpMeDonations_Install {
         }
 
         return true;
+    }
+
+    /**
+     * Create database tables
+     */
+    private static function create_tables() {
+        global $wpdb;
+
+        $charset_collate = $wpdb->get_charset_collate();
+
+        // Donations table
+        $donations_table = $wpdb->prefix . 'helpme_donations';
+        $donations_sql = "CREATE TABLE $donations_table (
+            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+            donation_id varchar(50) NOT NULL UNIQUE,
+            campaign_id bigint(20) unsigned DEFAULT 0,
+            form_id bigint(20) unsigned DEFAULT 0,
+            donor_id bigint(20) unsigned DEFAULT 0,
+            amount decimal(15,2) NOT NULL,
+            currency varchar(3) NOT NULL DEFAULT 'USD',
+            gateway varchar(50) NOT NULL,
+            gateway_transaction_id varchar(100) DEFAULT NULL,
+            status varchar(20) NOT NULL DEFAULT 'pending',
+            is_recurring tinyint(1) DEFAULT 0,
+            recurring_interval varchar(20) DEFAULT NULL,
+            parent_donation_id bigint(20) unsigned DEFAULT NULL,
+            anonymous tinyint(1) DEFAULT 0,
+            donor_name varchar(255) NOT NULL,
+            donor_email varchar(255) NOT NULL,
+            donor_phone varchar(50) DEFAULT NULL,
+            donor_address text DEFAULT NULL,
+            donor_message text DEFAULT NULL,
+            metadata text DEFAULT NULL,
+            created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            completed_at datetime DEFAULT NULL,
+            PRIMARY KEY (id),
+            UNIQUE KEY donation_id (donation_id),
+            KEY campaign_id (campaign_id),
+            KEY donor_id (donor_id),
+            KEY status (status),
+            KEY gateway (gateway),
+            KEY created_at (created_at)
+        ) $charset_collate;";
+
+        // Campaigns table
+        $campaigns_table = $wpdb->prefix . 'helpme_campaigns';
+        $campaigns_sql = "CREATE TABLE $campaigns_table (
+            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+            title varchar(255) NOT NULL,
+            slug varchar(255) NOT NULL,
+            description text DEFAULT NULL,
+            goal_amount decimal(15,2) DEFAULT NULL,
+            currency varchar(3) NOT NULL DEFAULT 'USD',
+            raised_amount decimal(15,2) DEFAULT 0,
+            donor_count int(11) DEFAULT 0,
+            category varchar(100) DEFAULT NULL,
+            image_url varchar(500) DEFAULT NULL,
+            video_url varchar(500) DEFAULT NULL,
+            start_date datetime DEFAULT NULL,
+            end_date datetime DEFAULT NULL,
+            status varchar(20) NOT NULL DEFAULT 'active',
+            created_by bigint(20) unsigned NOT NULL DEFAULT 1,
+            metadata text DEFAULT NULL,
+            created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            UNIQUE KEY slug (slug),
+            KEY status (status),
+            KEY category (category),
+            KEY created_by (created_by)
+        ) $charset_collate;";
+
+        // Donors table
+        $donors_table = $wpdb->prefix . 'helpme_donors';
+        $donors_sql = "CREATE TABLE $donors_table (
+            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+            email varchar(255) NOT NULL,
+            name varchar(255) NOT NULL,
+            phone varchar(50) DEFAULT NULL,
+            address text DEFAULT NULL,
+            total_donated decimal(15,2) DEFAULT 0,
+            donation_count int(11) DEFAULT 0,
+            first_donation_date datetime DEFAULT NULL,
+            last_donation_date datetime DEFAULT NULL,
+            status varchar(20) NOT NULL DEFAULT 'active',
+            metadata text DEFAULT NULL,
+            created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            UNIQUE KEY email (email),
+            KEY status (status)
+        ) $charset_collate;";
+
+        // Transactions table
+        $transactions_table = $wpdb->prefix . 'helpme_transactions';
+        $transactions_sql = "CREATE TABLE $transactions_table (
+            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+            donation_id bigint(20) unsigned NOT NULL,
+            transaction_id varchar(100) NOT NULL,
+            gateway varchar(50) NOT NULL,
+            gateway_transaction_id varchar(100) DEFAULT NULL,
+            type varchar(20) NOT NULL DEFAULT 'payment',
+            status varchar(20) NOT NULL DEFAULT 'pending',
+            amount decimal(15,2) NOT NULL,
+            currency varchar(3) NOT NULL,
+            gateway_response text DEFAULT NULL,
+            notes text DEFAULT NULL,
+            created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            KEY donation_id (donation_id),
+            KEY transaction_id (transaction_id),
+            KEY gateway (gateway),
+            KEY status (status),
+            KEY type (type)
+        ) $charset_collate;";
+
+        // Forms table
+        $forms_table = $wpdb->prefix . 'helpme_forms';
+        $forms_sql = "CREATE TABLE $forms_table (
+            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+            name varchar(255) NOT NULL,
+            config text NOT NULL,
+            status varchar(20) NOT NULL DEFAULT 'active',
+            usage_count int(11) DEFAULT 0,
+            created_by bigint(20) unsigned NOT NULL DEFAULT 1,
+            created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            KEY status (status),
+            KEY created_by (created_by)
+        ) $charset_collate;";
+
+        require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+
+        dbDelta($donations_sql);
+        dbDelta($campaigns_sql);
+        dbDelta($donors_sql);
+        dbDelta($transactions_sql);
+        dbDelta($forms_sql);
+
+        // Update database version
+        update_option('helpme_donations_db_version', HELPME_DONATIONS_DB_VERSION);
     }
 
     /**
@@ -176,8 +321,7 @@ class HelpMeDonations_Install {
     private static function create_default_form() {
         global $wpdb;
 
-        $db = new HelpMeDonations_DB();
-        $forms_table = $db->get_forms_table();
+        $forms_table = $wpdb->prefix . 'helpme_forms';
 
         // Check if default form already exists
         $existing = $wpdb->get_var(
@@ -280,6 +424,61 @@ class HelpMeDonations_Install {
     }
 
     /**
+     * Create pages
+     */
+    private static function create_pages() {
+        $pages = array(
+            'donation-success' => array(
+                'title' => 'Donation Success',
+                'content' => '[helpme_donation_success]',
+                'option' => 'helpme_donations_success_page'
+            ),
+            'donation-cancelled' => array(
+                'title' => 'Donation Cancelled',
+                'content' => 'Your donation was cancelled.',
+                'option' => 'helpme_donations_cancelled_page'
+            )
+        );
+
+        foreach ($pages as $slug => $page) {
+            $existing_page = get_option($page['option']);
+            
+            if (!$existing_page || !get_post($existing_page)) {
+                $page_id = wp_insert_post(array(
+                    'post_title' => $page['title'],
+                    'post_content' => $page['content'],
+                    'post_status' => 'publish',
+                    'post_type' => 'page',
+                    'post_name' => $slug
+                ));
+
+                if ($page_id && !is_wp_error($page_id)) {
+                    update_option($page['option'], $page_id);
+                }
+            }
+        }
+    }
+
+    /**
+     * Drop database tables
+     */
+    private static function drop_tables() {
+        global $wpdb;
+
+        $tables = array(
+            $wpdb->prefix . 'helpme_donations',
+            $wpdb->prefix . 'helpme_campaigns',
+            $wpdb->prefix . 'helpme_donors',
+            $wpdb->prefix . 'helpme_transactions',
+            $wpdb->prefix . 'helpme_forms'
+        );
+
+        foreach ($tables as $table) {
+            $wpdb->query("DROP TABLE IF EXISTS $table");
+        }
+    }
+
+    /**
      * Remove all plugin options
      */
     private static function remove_plugin_options() {
@@ -341,45 +540,8 @@ class HelpMeDonations_Install {
     public static function maybe_update_db() {
         $current_version = get_option('helpme_donations_db_version', '0');
         
-        if (version_compare($current_version, HelpMeDonations_DB::DB_VERSION, '<')) {
-            $db = new HelpMeDonations_DB();
-            $db->create_tables();
+        if (version_compare($current_version, HELPME_DONATIONS_DB_VERSION, '<')) {
+            self::create_tables();
         }
     }
-
-    /**
-     * Create pages
-     */
-    private static function create_pages() {
-        $pages = array(
-            'donation-success' => array(
-                'title' => 'Donation Success',
-                'content' => '[helpme_donation_success]',
-                'option' => 'helpme_donations_success_page'
-            ),
-            'donation-cancelled' => array(
-                'title' => 'Donation Cancelled',
-                'content' => 'Your donation was cancelled.',
-                'option' => 'helpme_donations_cancelled_page'
-            )
-        );
-
-        foreach ($pages as $slug => $page) {
-            $existing_page = get_option($page['option']);
-            
-            if (!$existing_page || !get_post($existing_page)) {
-                $page_id = wp_insert_post(array(
-                    'post_title' => $page['title'],
-                    'post_content' => $page['content'],
-                    'post_status' => 'publish',
-                    'post_type' => 'page',
-                    'post_name' => $slug
-                ));
-
-                if ($page_id && !is_wp_error($page_id)) {
-                    update_option($page['option'], $page_id);
-                }
-            }
-        }
-    }
-} 
+}
