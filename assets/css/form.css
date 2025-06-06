@@ -816,3 +816,621 @@ input[type="radio"] {
     background: #bee3f8;
     color: #1a365d;
 }
+
+/* Gateway Payment Form Styles */
+.gateway-form {
+    background: #f9f9f9;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 24px;
+    margin: 20px 0;
+}
+
+.payment-method-info {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.payment-method-info h5 {
+    margin: 0 0 8px 0;
+    color: #1a202c;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.payment-method-info p {
+    margin: 0;
+    color: #4a5568;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+/* Stripe Form Styles */
+.stripe-elements-container {
+    margin-bottom: 20px;
+}
+
+.stripe-element {
+    background: white;
+    padding: 12px;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    transition: border-color 0.3s ease;
+}
+
+.stripe-element:focus-within {
+    border-color: #3182ce;
+    box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.1);
+}
+
+.stripe-element.StripeElement--invalid {
+    border-color: #e53e3e;
+}
+
+/* Paynow Form Styles */
+.paynow-method-selection {
+    margin-bottom: 20px;
+}
+
+.method-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.method-option {
+    cursor: pointer;
+}
+
+.method-option input[type="radio"] {
+    display: none;
+}
+
+.method-card {
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 16px;
+    text-align: center;
+    transition: all 0.3s ease;
+    background: white;
+}
+
+.method-option input:checked+.method-card {
+    border-color: #3182ce;
+    background: #ebf8ff;
+}
+
+.method-card:hover {
+    border-color: #3182ce;
+    box-shadow: 0 4px 12px rgba(49, 130, 206, 0.15);
+}
+
+.method-icon {
+    font-size: 24px;
+    margin-bottom: 8px;
+    display: block;
+}
+
+.method-name {
+    font-weight: 600;
+    color: #1a202c;
+}
+
+/* Phone Input Styles */
+.phone-input-group {
+    display: flex;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    overflow: hidden;
+    transition: border-color 0.3s ease;
+}
+
+.phone-input-group:focus-within {
+    border-color: #3182ce;
+    box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.1);
+}
+
+.country-code {
+    background: #f7fafc;
+    padding: 12px 16px;
+    border-right: 2px solid #e2e8f0;
+    font-weight: 600;
+    color: #4a5568;
+    white-space: nowrap;
+}
+
+.phone-input {
+    border: none;
+    padding: 12px 16px;
+    flex: 1;
+    font-size: 16px;
+    background: transparent;
+    color: #1a202c;
+}
+
+.phone-input:focus {
+    outline: none;
+}
+
+/* Bank Select Styles */
+.bank-select {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 16px;
+    background: white;
+    color: #1a202c;
+    transition: border-color 0.3s ease;
+}
+
+.bank-select:focus {
+    outline: none;
+    border-color: #3182ce;
+    box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.1);
+}
+
+/* Payment Summary Styles */
+.payment-summary {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 16px;
+    margin: 16px 0;
+}
+
+.summary-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.summary-item:last-child {
+    border-bottom: none;
+}
+
+.summary-item .label {
+    font-weight: 500;
+    color: #4a5568;
+}
+
+.summary-item .value {
+    font-weight: 600;
+    color: #1a202c;
+}
+
+/* Payment Actions */
+.payment-actions {
+    margin: 24px 0;
+}
+
+.gateway-pay-button {
+    width: 100%;
+    background: linear-gradient(135deg, #3182ce, #2b77cb);
+    color: white;
+    border: none;
+    padding: 16px 24px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    min-height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.gateway-pay-button:hover {
+    background: linear-gradient(135deg, #2c5aa0, #2760a5);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(49, 130, 206, 0.25);
+}
+
+.gateway-pay-button:disabled {
+    background: #a0aec0;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.button-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: #fff;
+    animation: spin 1s ease-in-out infinite;
+    margin-left: 8px;
+}
+
+/* Security Notice */
+.security-notice {
+    text-align: center;
+    margin-top: 16px;
+    padding: 12px;
+    background: #f0fff4;
+    border: 1px solid #9ae6b4;
+    border-radius: 6px;
+}
+
+.security-notice small {
+    color: #22543d;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+/* Loading States */
+.loading-message {
+    text-align: center;
+    padding: 40px 20px;
+    color: #4a5568;
+}
+
+.loading-spinner {
+    display: inline-block;
+    width: 32px;
+    height: 32px;
+    border: 3px solid #e2e8f0;
+    border-radius: 50%;
+    border-top-color: #3182ce;
+    animation: spin 1s ease-in-out infinite;
+    margin-bottom: 16px;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Payment Form Placeholder */
+.payment-form-placeholder {
+    text-align: center;
+    padding: 40px 20px;
+    background: #f7fafc;
+    border: 2px dashed #e2e8f0;
+    border-radius: 8px;
+    color: #4a5568;
+}
+
+/* Error Messages */
+.error-message {
+    background: #fed7d7;
+    color: #742a2a;
+    padding: 12px 16px;
+    border-radius: 6px;
+    margin: 12px 0;
+    border: 1px solid #fc8181;
+}
+
+/* PayPal Container */
+.paypal-container {
+    margin: 20px 0;
+    min-height: 60px;
+}
+
+#paypal-button-container {
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+/* Help Text */
+.help-text {
+    font-size: 13px;
+    color: #4a5568;
+    margin-top: 6px;
+    display: block;
+}
+
+/* Form Groups in Gateway Forms */
+.gateway-form .form-group {
+    margin-bottom: 20px;
+}
+
+.gateway-form .form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #1a202c;
+    font-size: 14px;
+}
+
+.gateway-form .form-group input[type="checkbox"] {
+    margin-right: 8px;
+    transform: scale(1.2);
+    accent-color: #3182ce;
+}
+
+/* Responsive Design for Gateway Forms */
+@media (max-width: 768px) {
+    .method-options {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .gateway-form {
+        padding: 16px;
+        margin: 16px 0;
+    }
+
+    .phone-input-group {
+        flex-direction: column;
+    }
+
+    .country-code {
+        border-right: none;
+        border-bottom: 2px solid #e2e8f0;
+        text-align: center;
+    }
+
+    .payment-method-info {
+        margin-bottom: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .gateway-pay-button {
+        padding: 14px 20px;
+        font-size: 15px;
+    }
+
+    .method-card {
+        padding: 12px;
+    }
+
+    .method-icon {
+        font-size: 20px;
+        margin-bottom: 6px;
+    }
+}
+
+/* Focus States for Accessibility */
+.method-card:focus,
+.gateway-pay-button:focus,
+.bank-select:focus {
+    outline: 2px solid #3182ce;
+    outline-offset: 2px;
+}
+
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+    .gateway-form {
+        border-color: #000;
+    }
+
+    .method-card {
+        border-color: #000;
+    }
+
+    .gateway-pay-button {
+        background: #000;
+    }
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+
+    .gateway-pay-button,
+    .method-card,
+    .stripe-element,
+    .phone-input-group,
+    .bank-select {
+        transition: none;
+    }
+
+    .loading-spinner,
+    .button-spinner {
+        animation: none;
+    }
+
+    .gateway-pay-button:hover {
+        transform: none;
+    }
+}
+
+/* Step 4 Specific Styles */
+.form-step[data-step="4"] {
+    min-height: 400px;
+}
+
+.form-step[data-step="4"] .step-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-step[data-step="4"] #gateway-payment-container {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Selected Payment Method Indicator */
+.payment-method-card.selected {
+    border-color: #3182ce;
+    background: #ebf8ff;
+    box-shadow: 0 4px 12px rgba(49, 130, 206, 0.15);
+}
+
+.payment-method-card.selected::after {
+    content: '✓';
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: #3182ce;
+    color: white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.payment-method-card {
+    position: relative;
+}
+
+/* Gateway Icons */
+.payment-method-icon {
+    font-size: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+}
+
+/* Stripe-specific styles */
+.StripeElement {
+    height: 40px;
+    padding: 10px 12px;
+    color: #32325d;
+    background-color: white;
+    border: 1px solid transparent;
+    border-radius: 4px;
+}
+
+.StripeElement--focus {
+    box-shadow: 0 1px 3px 0 #cfd7df;
+}
+
+.StripeElement--invalid {
+    border-color: #fa755a;
+}
+
+.StripeElement--webkit-autofill {
+    background-color: #fefde5 !important;
+}
+
+/* PayPal-specific styles */
+.paypal-payment-form .paypal-container {
+    background: white;
+    border-radius: 8px;
+    padding: 16px;
+    border: 1px solid #e2e8f0;
+}
+
+/* Enhanced loading states */
+.gateway-form.loading {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.gateway-form.loading::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Success states */
+.gateway-form.success {
+    border-color: #38a169;
+    background: #f0fff4;
+}
+
+.gateway-form.success .payment-method-info {
+    color: #22543d;
+}
+
+/* Error states */
+.gateway-form.error {
+    border-color: #e53e3e;
+    background: #fed7d7;
+}
+
+.gateway-form.error .payment-method-info {
+    color: #742a2a;
+}
+
+/* Validation indicators */
+.form-group.valid input,
+.form-group.valid select {
+    border-color: #38a169;
+}
+
+.form-group.invalid input,
+.form-group.invalid select {
+    border-color: #e53e3e;
+}
+
+.validation-message {
+    font-size: 12px;
+    margin-top: 4px;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.validation-message.success {
+    background: #c6f6d5;
+    color: #22543d;
+}
+
+.validation-message.error {
+    background: #fed7d7;
+    color: #742a2a;
+}
+
+/* Custom checkbox styles for save card option */
+.gateway-form input[type="checkbox"] {
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border: 2px solid #e2e8f0;
+    border-radius: 3px;
+    background: white;
+    cursor: pointer;
+    position: relative;
+    margin-right: 8px;
+    vertical-align: middle;
+}
+
+.gateway-form input[type="checkbox"]:checked {
+    background: #3182ce;
+    border-color: #3182ce;
+}
+
+.gateway-form input[type="checkbox"]:checked::after {
+    content: '✓';
+    position: absolute;
+    top: -2px;
+    left: 2px;
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+/* Step navigation updates for new step */
+.step-indicator .step[data-step="4"] .step-label {
+    font-size: 12px;
+}
+
+@media (max-width: 600px) {
+    .step-indicator .step-label {
+        font-size: 10px;
+    }
+
+    .step-number {
+        width: 28px;
+        height: 28px;
+        font-size: 12px;
+    }
+}
