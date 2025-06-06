@@ -775,6 +775,8 @@ class HelpMeDonations_Admin {
             'helpme_donations_paynow_enabled',
             'helpme_donations_paynow_integration_id',
             'helpme_donations_paynow_integration_key',
+            'helpme_donations_inbucks_enabled',
+            'helpme_donations_zimswitch_enabled',
             'helpme_donations_admin_email',
             'helpme_donations_send_admin_notifications',
             'helpme_donations_send_donor_confirmations',
@@ -796,6 +798,33 @@ class HelpMeDonations_Admin {
                 }
             }
         }
+        
+        // Update the enabled gateways array based on individual gateway settings
+        $enabled_gateways = array();
+        
+        if (get_option('helpme_donations_stripe_enabled', 0)) {
+            $enabled_gateways[] = 'stripe';
+        }
+        
+        if (get_option('helpme_donations_paypal_enabled', 0)) {
+            $enabled_gateways[] = 'paypal';
+        }
+        
+        if (get_option('helpme_donations_paynow_enabled', 0)) {
+            $enabled_gateways[] = 'paynow';
+        }
+        
+        // Check for other gateways that might be enabled
+        if (get_option('helpme_donations_inbucks_enabled', 0)) {
+            $enabled_gateways[] = 'inbucks';
+        }
+        
+        if (get_option('helpme_donations_zimswitch_enabled', 0)) {
+            $enabled_gateways[] = 'zimswitch';
+        }
+        
+        // Update the enabled gateways option (this will be stored as a serialized array)
+        update_option('helpme_donations_enabled_gateways', $enabled_gateways);
         
         add_action('admin_notices', function() {
             echo '<div class="notice notice-success is-dismissible"><p>' . __('Settings saved successfully!', 'helpme-donations') . '</p></div>';

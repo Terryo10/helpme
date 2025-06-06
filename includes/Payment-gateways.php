@@ -7,6 +7,10 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+require_once HELPME_DONATIONS_PLUGIN_DIR . 'includes/gateways/stripe.php';
+require_once HELPME_DONATIONS_PLUGIN_DIR . 'includes/gateways/class-paypal.php';
+require_once HELPME_DONATIONS_PLUGIN_DIR . 'includes/gateways/paynow.php';
+require_once HELPME_DONATIONS_PLUGIN_DIR . 'includes/gateways/class-inbucks.php';
 require_once HELPME_DONATIONS_PLUGIN_DIR . 'includes/gateways/class-zimswitch.php';
 
 class ZimDonations_Payment_Gateways {
@@ -53,12 +57,20 @@ class ZimDonations_Payment_Gateways {
      */
     public function get_available_gateways() {
         $available = array();
-        $enabled_gateways = get_option('zim_donations_enabled_gateways', array());
+        $enabled_gateways = get_option('helpme_donations_enabled_gateways', array());
+        
+        // If no gateways are specifically enabled, make all gateways available by default
+        if (empty($enabled_gateways)) {
+            $enabled_gateways = array_keys($this->gateways);
+        }
 
-        foreach ($this->gateways as $id => $gateway) {
-            if (in_array($id, $enabled_gateways) && $gateway->is_available()) {
-                $available[$id] = $gateway;
+        foreach ($this->gateways as $gateway) {
+            if(in_array($gateway->id, $enabled_gateways)){
+
+                $available[] = $gateway;
             }
+
+        
         }
 
         return $available;

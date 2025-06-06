@@ -4,8 +4,44 @@ if (!defined('ABSPATH')) {
 }
 
 class HelpMeDonations_Form_Builder {
+    
+    /**
+     * Payment gateways instance
+     */
+    private $payment_gateways;
+
+    /**
+     * Available payment gateways array
+     */
+    private $available_gateways = array();
+
     public function __construct() {
+        $this->get_payment_gateways();
         $this->init_hooks();
+    }
+
+
+    /**
+     * Get array of available payment gateways
+     */
+    private function get_payment_gateways() {
+        // Check if payment gateways class exists
+        if (class_exists('ZimDonations_Payment_Gateways')) {
+            $this->payment_gateways = new ZimDonations_Payment_Gateways();
+            $this->available_gateways = $this->payment_gateways->get_available_gateways();
+          
+        } else {
+            $this->available_gateways = array();
+        }
+
+        return $this->available_gateways;
+    }
+
+    /**
+     * Get available gateways (public method)
+     */
+    public function get_available_gateways() {
+        return $this->available_gateways;
     }
 
     private function init_hooks() {
@@ -133,14 +169,27 @@ class HelpMeDonations_Form_Builder {
                     <h4 class="section-title"><?php _e('Payment Method', 'helpme-donations'); ?></h4>
                     
                     <div class="payment-methods">
-                        <div class="payment-method-notice">
-                            <p><?php _e('Please configure payment gateways in the plugin settings to enable donations.', 'helpme-donations'); ?></p>
-                            <?php if (current_user_can('manage_options')): ?>
-                                <a href="<?php echo admin_url('admin.php?page=helpme-donations-settings&tab=gateways'); ?>" class="configure-link">
-                                    <?php _e('Configure Payment Gateways', 'helpme-donations'); ?>
-                                </a>
-                            <?php endif; ?>
-                        </div>
+                        
+                        <?php if (!empty($this->available_gateways)): ?>
+                            <?php foreach ($this->available_gateways as $gateway): ?>
+                                <label class="payment-method-option">
+                                    <input type="radio" name="payment_gateway" value="<?php echo esc_attr($gateway->id); ?>" required>
+                                    <div class="payment-method-card">
+                                        <span class="payment-method-name"><?php echo esc_html($gateway->title ?? $gateway->name); ?></span>
+                                        <span class="payment-method-description"><?php echo esc_html($gateway->description); ?></span>
+                                    </div>
+                                </label>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <div class="payment-method-notice">
+                                <p><?php _e('Please configure payment gateways in the plugin settings to enable donations.', 'helpme-donations'); ?></p>
+                                <?php if (current_user_can('manage_options')): ?>
+                                    <a href="<?php echo admin_url('admin.php?page=helpme-donations-settings&tab=gateways'); ?>" class="configure-link">
+                                        <?php _e('Configure Payment Gateways', 'helpme-donations'); ?>
+                                    </a>
+                                <?php endif; ?>
+                            </div>
+                        <?php endif; ?>
                     </div>
                 </div>
 
@@ -337,6 +386,49 @@ class HelpMeDonations_Form_Builder {
         .configure-link:hover {
             background: #005a87;
             color: white;
+        }
+
+        .payment-method-option {
+            display: block;
+            margin-bottom: 15px;
+            cursor: pointer;
+        }
+
+        .payment-method-option input[type="radio"] {
+            display: none;
+        }
+
+        .payment-method-card {
+            border: 2px solid #e1e1e1;
+            border-radius: 6px;
+            padding: 20px;
+            background: #fff;
+            transition: all 0.3s ease;
+        }
+
+        .payment-method-card:hover {
+            border-color: #007cba;
+            box-shadow: 0 2px 8px rgba(0,124,186,0.1);
+        }
+
+        .payment-method-option input[type="radio"]:checked + .payment-method-card {
+            border-color: #007cba;
+            background: #f8f9fa;
+            box-shadow: 0 2px 8px rgba(0,124,186,0.2);
+        }
+
+        .payment-method-name {
+            display: block;
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .payment-method-description {
+            display: block;
+            font-size: 14px;
+            color: #666;
         }
 
         .submit-donation {
