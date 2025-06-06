@@ -294,6 +294,9 @@ class HelpMeDonations_Form_Builder {
 
                         <div class="payment-form-container">
                             <!-- Gateway-specific payment form will be loaded here -->
+                             
+
+
                         </div>
                     </div>
                 </div>
