@@ -58,11 +58,7 @@ class ZimDonations_Payment_Gateways {
     public function get_available_gateways() {
         $available = array();
         $enabled_gateways = get_option('helpme_donations_enabled_gateways', array());
-        
-        // If no gateways are specifically enabled, make all gateways available by default
-        if (empty($enabled_gateways)) {
-            $enabled_gateways = array_keys($this->gateways);
-        }
+
 
         foreach ($this->gateways as $gateway) {
             if(in_array($gateway->id, $enabled_gateways)){

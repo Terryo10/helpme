@@ -20,7 +20,6 @@ class HelpMeDonations_Form_Builder {
         $this->init_hooks();
     }
 
-
     /**
      * Get array of available payment gateways
      */
@@ -29,7 +28,6 @@ class HelpMeDonations_Form_Builder {
         if (class_exists('ZimDonations_Payment_Gateways')) {
             $this->payment_gateways = new ZimDonations_Payment_Gateways();
             $this->available_gateways = $this->payment_gateways->get_available_gateways();
-          
         } else {
             $this->available_gateways = array();
         }
@@ -46,6 +44,27 @@ class HelpMeDonations_Form_Builder {
 
     private function init_hooks() {
         add_action('wp_enqueue_scripts', array($this, 'enqueue_form_scripts'));
+    }
+
+    public function enqueue_form_scripts() {
+        wp_enqueue_style('helpme-donations-form', plugins_url('assets/css/form.css', dirname(__FILE__)));
+        wp_enqueue_script('helpme-donations-form', plugins_url('assets/js/form.js', dirname(__FILE__)), array('jquery'), '1.0.0', true);
+        
+        // Localize script with form data
+        wp_localize_script('helpme-donations-form', 'helpmeDonations', array(
+            'ajaxurl' => admin_url('admin-ajax.php'),
+            'nonce' => wp_create_nonce('helpme_donations_nonce'),
+            'currency_symbols' => $this->get_currency_symbols(),
+            'i18n' => array(
+                'continue' => __('Continue →', 'helpme-donations'),
+                'choose_payment' => __('Choose Payment →', 'helpme-donations'),
+                'process_payment' => __('Process Payment →', 'helpme-donations'),
+                'processing' => __('Processing your payment...', 'helpme-donations'),
+                'success' => __('Payment completed successfully!', 'helpme-donations'),
+                'share_copied' => __('Share text copied to clipboard!', 'helpme-donations'),
+                'anonymous_donor' => __('Anonymous Donor', 'helpme-donations')
+            )
+        ));
     }
 
     public function render_form($atts) {
@@ -82,488 +101,243 @@ class HelpMeDonations_Form_Builder {
                 </div>
             <?php endif; ?>
 
+            <!-- Step Progress Indicator -->
+            <div class="step-progress">
+                <div class="step-indicator">
+                    <div class="step active" data-step="1">
+                        <div class="step-number">1</div>
+                        <div class="step-label"><?php _e('Amount', 'helpme-donations'); ?></div>
+                    </div>
+                    <div class="step-line"></div>
+                    <div class="step" data-step="2">
+                        <div class="step-number">2</div>
+                        <div class="step-label"><?php _e('Details', 'helpme-donations'); ?></div>
+                    </div>
+                    <div class="step-line"></div>
+                    <div class="step" data-step="3">
+                        <div class="step-number">3</div>
+                        <div class="step-label"><?php _e('Payment', 'helpme-donations'); ?></div>
+                    </div>
+                    <div class="step-line"></div>
+                    <div class="step" data-step="4">
+                        <div class="step-number">4</div>
+                        <div class="step-label"><?php _e('Process', 'helpme-donations'); ?></div>
+                    </div>
+                    <div class="step-line"></div>
+                    <div class="step" data-step="5">
+                        <div class="step-number">5</div>
+                        <div class="step-label"><?php _e('Complete', 'helpme-donations'); ?></div>
+                    </div>
+                </div>
+            </div>
+
             <form class="helpme-donation-form" data-form-id="<?php echo esc_attr($atts['form_id']); ?>" data-campaign-id="<?php echo esc_attr($atts['campaign_id']); ?>">
                 <?php wp_nonce_field('helpme_donations_nonce', 'helpme_donations_nonce'); ?>
                 
-                <!-- Amount Selection -->
-                <div class="form-section" id="amount-section">
-                    <h4 class="section-title"><?php _e('Select Donation Amount', 'helpme-donations'); ?></h4>
-                    
-                    <div class="amount-selection">
-                        <div class="amount-buttons">
-                            <?php foreach ($amounts as $amount): ?>
-                                <button type="button" class="amount-button" data-amount="<?php echo esc_attr($amount); ?>">
-                                    <?php echo $this->format_currency($amount, $atts['currency']); ?>
-                                </button>
-                            <?php endforeach; ?>
-                        </div>
+                <!-- Step 1: Amount Selection -->
+                <div class="form-step active" data-step="1">
+                    <div class="step-content">
+                        <h4 class="step-title"><?php _e('Select Your Donation Amount', 'helpme-donations'); ?></h4>
                         
-                        <div class="custom-amount">
-                            <label for="custom-amount-input"><?php _e('Custom Amount:', 'helpme-donations'); ?></label>
-                            <div class="currency-input">
-                                <span class="currency-symbol"><?php echo $this->get_currency_symbol($atts['currency']); ?></span>
-                                <input type="number" id="custom-amount-input" name="custom_amount" placeholder="0.00" min="1" step="0.01">
+                        <div class="amount-selection">
+                            <div class="amount-buttons">
+                                <?php foreach ($amounts as $amount): ?>
+                                    <button type="button" class="amount-button" data-amount="<?php echo esc_attr($amount); ?>">
+                                        <?php echo $this->format_currency($amount, $atts['currency']); ?>
+                                    </button>
+                                <?php endforeach; ?>
                             </div>
-                        </div>
-                        
-                        <input type="hidden" name="amount" id="selected-amount" required>
-                        <input type="hidden" name="currency" value="<?php echo esc_attr($atts['currency']); ?>">
-                    </div>
-
-                    <?php if ($atts['recurring'] === 'true'): ?>
-                        <div class="recurring-options">
-                            <label class="recurring-toggle">
-                                <input type="checkbox" name="is_recurring" value="1">
-                                <span><?php _e('Make this a recurring donation', 'helpme-donations'); ?></span>
-                            </label>
-                            <div class="recurring-interval" style="display: none;">
-                                <label><?php _e('Frequency:', 'helpme-donations'); ?></label>
-                                <select name="recurring_interval">
-                                    <option value="monthly"><?php _e('Monthly', 'helpme-donations'); ?></option>
-                                    <option value="quarterly"><?php _e('Quarterly', 'helpme-donations'); ?></option>
-                                    <option value="yearly"><?php _e('Yearly', 'helpme-donations'); ?></option>
-                                </select>
+                            
+                            <div class="custom-amount">
+                                <label for="custom-amount-input"><?php _e('Or enter a custom amount:', 'helpme-donations'); ?></label>
+                                <div class="currency-input">
+                                    <span class="currency-symbol"><?php echo $this->get_currency_symbol($atts['currency']); ?></span>
+                                    <input type="number" id="custom-amount-input" name="custom_amount" placeholder="0.00" min="1" step="0.01">
+                                </div>
                             </div>
+                            
+                            <input type="hidden" name="amount" id="selected-amount" required>
+                            <input type="hidden" name="currency" value="<?php echo esc_attr($atts['currency']); ?>">
                         </div>
-                    <?php endif; ?>
-                </div>
 
-                <!-- Personal Information -->
-                <div class="form-section" id="personal-section">
-                    <h4 class="section-title"><?php _e('Your Information', 'helpme-donations'); ?></h4>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="donor-name"><?php _e('Full Name', 'helpme-donations'); ?> <span class="required">*</span></label>
-                            <input type="text" id="donor-name" name="donor_name" required>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="donor-email"><?php _e('Email Address', 'helpme-donations'); ?> <span class="required">*</span></label>
-                            <input type="email" id="donor-email" name="donor_email" required>
-                        </div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="donor-phone"><?php _e('Phone Number', 'helpme-donations'); ?></label>
-                            <input type="tel" id="donor-phone" name="donor_phone">
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="donor-message"><?php _e('Message (Optional)', 'helpme-donations'); ?></label>
-                        <textarea id="donor-message" name="donor_message" rows="3" placeholder="<?php _e('Share why you\'re donating...', 'helpme-donations'); ?>"></textarea>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="checkbox-label">
-                            <input type="checkbox" name="anonymous" value="1">
-                            <span><?php _e('Make this donation anonymous', 'helpme-donations'); ?></span>
-                        </label>
-                    </div>
-                </div>
-
-                <!-- Payment Method Selection -->
-                <div class="form-section" id="payment-section">
-                    <h4 class="section-title"><?php _e('Payment Method', 'helpme-donations'); ?></h4>
-                    
-                    <div class="payment-methods">
-                        
-                        <?php if (!empty($this->available_gateways)): ?>
-                            <?php foreach ($this->available_gateways as $gateway): ?>
-                                <label class="payment-method-option">
-                                    <input type="radio" name="payment_gateway" value="<?php echo esc_attr($gateway->id); ?>" required>
-                                    <div class="payment-method-card">
-                                        <span class="payment-method-name"><?php echo esc_html($gateway->title ?? $gateway->name); ?></span>
-                                        <span class="payment-method-description"><?php echo esc_html($gateway->description); ?></span>
-                                    </div>
+                        <?php if ($atts['recurring'] === 'true'): ?>
+                            <div class="recurring-options">
+                                <label class="recurring-toggle">
+                                    <input type="checkbox" name="is_recurring" value="1">
+                                    <span><?php _e('Make this a recurring donation', 'helpme-donations'); ?></span>
                                 </label>
-                            <?php endforeach; ?>
-                        <?php else: ?>
-                            <div class="payment-method-notice">
-                                <p><?php _e('Please configure payment gateways in the plugin settings to enable donations.', 'helpme-donations'); ?></p>
-                                <?php if (current_user_can('manage_options')): ?>
-                                    <a href="<?php echo admin_url('admin.php?page=helpme-donations-settings&tab=gateways'); ?>" class="configure-link">
-                                        <?php _e('Configure Payment Gateways', 'helpme-donations'); ?>
-                                    </a>
-                                <?php endif; ?>
+                                <div class="recurring-interval" style="display: none;">
+                                    <label><?php _e('Frequency:', 'helpme-donations'); ?></label>
+                                    <select name="recurring_interval">
+                                        <option value="monthly"><?php _e('Monthly', 'helpme-donations'); ?></option>
+                                        <option value="quarterly"><?php _e('Quarterly', 'helpme-donations'); ?></option>
+                                        <option value="yearly"><?php _e('Yearly', 'helpme-donations'); ?></option>
+                                    </select>
+                                </div>
                             </div>
                         <?php endif; ?>
                     </div>
                 </div>
 
-                <!-- Submit Section -->
-                <div class="form-section" id="submit-section">
-                    <button type="submit" class="submit-donation" disabled>
-                        <span class="button-text"><?php _e('Complete Donation', 'helpme-donations'); ?></span>
-                        <span class="button-spinner" style="display: none;"></span>
-                    </button>
-                    
-                    <div class="form-messages"></div>
+                <!-- Step 2: Donor Information -->
+                <div class="form-step" data-step="2">
+                    <div class="step-content">
+                        <h4 class="step-title"><?php _e('Your Information', 'helpme-donations'); ?></h4>
+                        
+                        <div class="donor-options">
+                            <label class="donor-option">
+                                <input type="radio" name="donor_type" value="named" checked>
+                                <div class="option-card">
+                                    <strong><?php _e('I want to be recognized', 'helpme-donations'); ?></strong>
+                                    <span><?php _e('Share my name with this donation', 'helpme-donations'); ?></span>
+                                </div>
+                            </label>
+                            
+                            <label class="donor-option">
+                                <input type="radio" name="donor_type" value="anonymous">
+                                <div class="option-card">
+                                    <strong><?php _e('Donate anonymously', 'helpme-donations'); ?></strong>
+                                    <span><?php _e('Keep my donation private', 'helpme-donations'); ?></span>
+                                </div>
+                            </label>
+                        </div>
+
+                        <div class="donor-details">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="donor-name"><?php _e('Full Name', 'helpme-donations'); ?> <span class="required">*</span></label>
+                                    <input type="text" id="donor-name" name="donor_name" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="donor-email"><?php _e('Email Address', 'helpme-donations'); ?> <span class="required">*</span></label>
+                                    <input type="email" id="donor-email" name="donor_email" required>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="donor-phone"><?php _e('Phone Number (Optional)', 'helpme-donations'); ?></label>
+                                    <input type="tel" id="donor-phone" name="donor_phone">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="donor-message"><?php _e('Share why you\'re donating (Optional)', 'helpme-donations'); ?></label>
+                                <textarea id="donor-message" name="donor_message" rows="3" placeholder="<?php _e('Your message will inspire others to donate...', 'helpme-donations'); ?>"></textarea>
+                            </div>
+                        </div>
+
+                        <input type="hidden" name="anonymous" value="0">
+                    </div>
                 </div>
+
+                <!-- Step 3: Payment Method -->
+                <div class="form-step" data-step="3">
+                    <div class="step-content">
+                        <h4 class="step-title"><?php _e('Choose Payment Method', 'helpme-donations'); ?></h4>
+                        
+                        <div class="payment-methods">
+                            <?php if (!empty($this->available_gateways) && is_array($this->available_gateways)): ?>
+                                <?php foreach ($this->available_gateways as $gateway): ?>
+                                    <?php if (is_object($gateway) && isset($gateway->id)): ?>
+                                        <label class="payment-method-option">
+                                            <input type="radio" name="payment_gateway" value="<?php echo esc_attr($gateway->id); ?>" required>
+                                            <div class="payment-method-card">
+                                                <div class="payment-method-header">
+                                                    <span class="payment-method-name"><?php echo esc_html($gateway->title ?? $gateway->name ?? $gateway->id); ?></span>
+                                                    <div class="payment-method-icon">💳</div>
+                                                </div>
+                                                <span class="payment-method-description"><?php echo esc_html($gateway->description ?? ''); ?></span>
+                                            </div>
+                                        </label>
+                                    <?php endif; ?>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <div class="payment-method-notice">
+                                    <p><?php _e('Please configure payment gateways in the plugin settings to enable donations.', 'helpme-donations'); ?></p>
+                                    <?php if (current_user_can('manage_options')): ?>
+                                        <a href="<?php echo admin_url('admin.php?page=helpme-donations-settings&tab=gateways'); ?>" class="configure-link">
+                                            <?php _e('Configure Payment Gateways', 'helpme-donations'); ?>
+                                        </a>
+                                    <?php endif; ?>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 4: Payment Processing -->
+                <div class="form-step" data-step="4">
+                    <div class="step-content">
+                        <h4 class="step-title"><?php _e('Complete Your Payment', 'helpme-donations'); ?></h4>
+                        
+                        <div class="donation-summary">
+                            <h5><?php _e('Donation Summary', 'helpme-donations'); ?></h5>
+                            <div class="summary-row">
+                                <span><?php _e('Amount:', 'helpme-donations'); ?></span>
+                                <span class="summary-amount"></span>
+                            </div>
+                            <div class="summary-row recurring-summary" style="display: none;">
+                                <span><?php _e('Frequency:', 'helpme-donations'); ?></span>
+                                <span class="summary-frequency"></span>
+                            </div>
+                            <div class="summary-row">
+                                <span><?php _e('Donor:', 'helpme-donations'); ?></span>
+                                <span class="summary-donor"></span>
+                            </div>
+                            <div class="summary-row">
+                                <span><?php _e('Payment Method:', 'helpme-donations'); ?></span>
+                                <span class="summary-gateway"></span>
+                            </div>
+                        </div>
+
+                        <div class="payment-form-container">
+                            <!-- Gateway-specific payment form will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 5: Completion -->
+                <div class="form-step" data-step="5">
+                    <div class="step-content">
+                        <div class="completion-message">
+                            <div class="success-icon">✅</div>
+                            <h4 class="completion-title"><?php _e('Thank You for Your Donation!', 'helpme-donations'); ?></h4>
+                            <p class="completion-text"><?php _e('Your generosity makes a real difference. You will receive a confirmation email shortly.', 'helpme-donations'); ?></p>
+                            
+                            <div class="completion-details">
+                                <div class="detail-row">
+                                    <span><?php _e('Transaction ID:', 'helpme-donations'); ?></span>
+                                    <span class="transaction-id"></span>
+                                </div>
+                                <div class="detail-row">
+                                    <span><?php _e('Amount:', 'helpme-donations'); ?></span>
+                                    <span class="final-amount"></span>
+                                </div>
+                            </div>
+
+                            <div class="completion-actions">
+                                <button type="button" class="share-donation"><?php _e('Share Your Impact', 'helpme-donations'); ?></button>
+                                <button type="button" class="new-donation"><?php _e('Make Another Donation', 'helpme-donations'); ?></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Navigation Buttons -->
+                <div class="form-navigation">
+                    <button type="button" class="nav-button prev-button" style="display: none;">
+                        <span><?php _e('← Previous', 'helpme-donations'); ?></span>
+                    </button>
+                    <button type="button" class="nav-button next-button">
+                        <span><?php _e('Continue →', 'helpme-donations'); ?></span>
+                    </button>
+                </div>
+
+                <div class="form-messages"></div>
             </form>
         </div>
-
-        <style>
-        .helpme-donations-form-wrapper {
-            max-width: 600px;
-            margin: 20px auto;
-            background: #fff;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            padding: 30px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-
-        .form-title {
-            text-align: center;
-            margin-bottom: 10px;
-            color: #333;
-            font-size: 28px;
-        }
-
-        .form-description {
-            text-align: center;
-            margin-bottom: 30px;
-            color: #666;
-        }
-
-        .form-section {
-            margin-bottom: 30px;
-        }
-
-        .section-title {
-            color: #333;
-            margin-bottom: 20px;
-            font-size: 20px;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 10px;
-        }
-
-        .amount-buttons {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        .amount-button {
-            background: #f8f9fa;
-            border: 2px solid #e1e1e1;
-            border-radius: 6px;
-            padding: 15px 10px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .amount-button:hover,
-        .amount-button.selected {
-            background: #007cba;
-            border-color: #007cba;
-            color: white;
-        }
-
-        .custom-amount {
-            margin-bottom: 20px;
-        }
-
-        .currency-input {
-            display: flex;
-            border: 2px solid #e1e1e1;
-            border-radius: 6px;
-            overflow: hidden;
-        }
-
-        .currency-symbol {
-            background: #f8f9fa;
-            padding: 12px 15px;
-            border-right: 1px solid #e1e1e1;
-            font-weight: bold;
-        }
-
-        .currency-input input {
-            border: none;
-            padding: 12px 15px;
-            flex: 1;
-            font-size: 16px;
-        }
-
-        .currency-input input:focus {
-            outline: none;
-        }
-
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #333;
-        }
-
-        .form-group input,
-        .form-group select,
-        .form-group textarea {
-            width: 100%;
-            padding: 12px 15px;
-            border: 2px solid #e1e1e1;
-            border-radius: 6px;
-            font-size: 16px;
-            box-sizing: border-box;
-        }
-
-        .form-group input:focus,
-        .form-group select:focus,
-        .form-group textarea:focus {
-            outline: none;
-            border-color: #007cba;
-        }
-
-        .required {
-            color: #dc3545;
-        }
-
-        .recurring-options {
-            margin-top: 20px;
-        }
-
-        .recurring-toggle {
-            display: flex;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-
-        .recurring-toggle input {
-            margin-right: 10px;
-            transform: scale(1.2);
-        }
-
-        .recurring-interval select {
-            max-width: 200px;
-        }
-
-        .checkbox-label {
-            display: flex;
-            align-items: center;
-            cursor: pointer;
-        }
-
-        .checkbox-label input {
-            margin-right: 10px;
-            transform: scale(1.2);
-        }
-
-        .payment-method-notice {
-            background: #fff3cd;
-            border: 1px solid #ffeaa7;
-            border-radius: 4px;
-            padding: 20px;
-            text-align: center;
-        }
-
-        .configure-link {
-            display: inline-block;
-            background: #007cba;
-            color: white;
-            padding: 10px 20px;
-            text-decoration: none;
-            border-radius: 4px;
-            margin-top: 10px;
-        }
-
-        .configure-link:hover {
-            background: #005a87;
-            color: white;
-        }
-
-        .payment-method-option {
-            display: block;
-            margin-bottom: 15px;
-            cursor: pointer;
-        }
-
-        .payment-method-option input[type="radio"] {
-            display: none;
-        }
-
-        .payment-method-card {
-            border: 2px solid #e1e1e1;
-            border-radius: 6px;
-            padding: 20px;
-            background: #fff;
-            transition: all 0.3s ease;
-        }
-
-        .payment-method-card:hover {
-            border-color: #007cba;
-            box-shadow: 0 2px 8px rgba(0,124,186,0.1);
-        }
-
-        .payment-method-option input[type="radio"]:checked + .payment-method-card {
-            border-color: #007cba;
-            background: #f8f9fa;
-            box-shadow: 0 2px 8px rgba(0,124,186,0.2);
-        }
-
-        .payment-method-name {
-            display: block;
-            font-size: 16px;
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 5px;
-        }
-
-        .payment-method-description {
-            display: block;
-            font-size: 14px;
-            color: #666;
-        }
-
-        .submit-donation {
-            width: 100%;
-            background: #007cba;
-            color: white;
-            border: none;
-            padding: 15px 30px;
-            border-radius: 6px;
-            font-size: 18px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background 0.3s ease;
-        }
-
-        .submit-donation:hover:not(:disabled) {
-            background: #005a87;
-        }
-
-        .submit-donation:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-        }
-
-        .button-spinner {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255,255,255,.3);
-            border-radius: 50%;
-            border-top-color: #fff;
-            animation: spin 1s ease-in-out infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .form-messages {
-            margin-top: 20px;
-        }
-
-        .form-message {
-            padding: 15px;
-            border-radius: 6px;
-            margin-bottom: 15px;
-        }
-
-        .form-message.success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-
-        .form-message.error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-
-        @media (max-width: 768px) {
-            .helpme-donations-form-wrapper {
-                margin: 10px;
-                padding: 20px;
-            }
-
-            .form-row {
-                grid-template-columns: 1fr;
-            }
-
-            .amount-buttons {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-        </style>
-
-        <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const form = document.querySelector('#<?php echo esc_js($form_id); ?> .helpme-donation-form');
-            const amountButtons = form.querySelectorAll('.amount-button');
-            const customAmountInput = form.querySelector('#custom-amount-input');
-            const selectedAmountInput = form.querySelector('#selected-amount');
-            const submitButton = form.querySelector('.submit-donation');
-            const recurringCheckbox = form.querySelector('input[name="is_recurring"]');
-            const recurringInterval = form.querySelector('.recurring-interval');
-            const messagesContainer = form.querySelector('.form-messages');
-
-            // Amount selection
-            amountButtons.forEach(button => {
-                button.addEventListener('click', function() {
-                    amountButtons.forEach(b => b.classList.remove('selected'));
-                    this.classList.add('selected');
-                    selectedAmountInput.value = this.dataset.amount;
-                    customAmountInput.value = '';
-                    checkFormValidity();
-                });
-            });
-
-            // Custom amount input
-            customAmountInput.addEventListener('input', function() {
-                amountButtons.forEach(b => b.classList.remove('selected'));
-                selectedAmountInput.value = this.value;
-                checkFormValidity();
-            });
-
-            // Recurring options
-            if (recurringCheckbox && recurringInterval) {
-                recurringCheckbox.addEventListener('change', function() {
-                    recurringInterval.style.display = this.checked ? 'block' : 'none';
-                });
-            }
-
-            // Form validation
-            function checkFormValidity() {
-                const amount = parseFloat(selectedAmountInput.value);
-                const name = form.querySelector('#donor-name').value.trim();
-                const email = form.querySelector('#donor-email').value.trim();
-                
-                submitButton.disabled = !(amount > 0 && name && email);
-            }
-
-            // Listen for input changes
-            form.addEventListener('input', checkFormValidity);
-
-            // Form submission
-            form.addEventListener('submit', function(e) {
-                e.preventDefault();
-                showMessage('Payment gateway configuration required. Please contact the site administrator.', 'error');
-            });
-
-            function showMessage(message, type) {
-                messagesContainer.innerHTML = `<div class="form-message ${type}">${message}</div>`;
-            }
-        });
-        </script>
         <?php
     }
 
@@ -592,7 +366,13 @@ class HelpMeDonations_Form_Builder {
         return isset($symbols[$currency]) ? $symbols[$currency] : $currency;
     }
 
-    public function enqueue_form_scripts() {
-        // Scripts are inline for now
+    private function get_currency_symbols() {
+        return array(
+            'USD' => '$',
+            'ZIG' => 'ZiG',
+            'EUR' => '€',
+            'GBP' => '£',
+            'ZAR' => 'R'
+        );
     }
 }
