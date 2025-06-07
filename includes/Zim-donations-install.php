@@ -135,6 +135,7 @@ class HelpMeDonations_Install {
                 donor_phone varchar(50) DEFAULT NULL,
                 donor_address text DEFAULT NULL,
                 donor_message text DEFAULT NULL,
+                poll_url text DEFAULT NULL,
                 metadata text DEFAULT NULL,
                 created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
