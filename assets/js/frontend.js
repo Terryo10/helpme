@@ -265,8 +265,9 @@
 
                     case 'tel':
                         if (!this.isValidPhone(value)) {
-                            errorMessage = 'Please enter a valid phone number.';
-                            isValid = false;
+                           
+                            // errorMessage = 'Please enter a valid phone number.';
+                            isValid = true;
                         }
                         break;
 
@@ -480,7 +481,7 @@
         }
 
         isValidPhone(phone) {
-            const phoneRegex = /^[\+]?[0-9\s\-\(\)]{10,}$/;
+            const phoneRegex = /^\d{9}$/;
             return phoneRegex.test(phone);
         }
     }

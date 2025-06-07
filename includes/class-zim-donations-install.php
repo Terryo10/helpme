@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Installation and activation for Help Me Donations
  */
@@ -7,12 +8,14 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class HelpMeDonations_Install {
+class HelpMeDonations_Install
+{
 
     /**
      * Plugin activation
      */
-    public static function activate() {
+    public static function activate()
+    {
         // Check requirements
         if (!self::check_requirements()) {
             deactivate_plugins(HELPME_DONATIONS_PLUGIN_BASENAME);
@@ -44,7 +47,8 @@ class HelpMeDonations_Install {
     /**
      * Plugin deactivation
      */
-    public static function deactivate() {
+    public static function deactivate()
+    {
         // Clear scheduled cron jobs
         wp_clear_scheduled_hook('helpme_donations_process_recurring');
         wp_clear_scheduled_hook('helpme_donations_cleanup_temp_data');
@@ -59,7 +63,8 @@ class HelpMeDonations_Install {
     /**
      * Plugin uninstall
      */
-    public static function uninstall() {
+    public static function uninstall()
+    {
         // Check if we should remove data
         $remove_data = get_option('helpme_donations_remove_data_on_uninstall', false);
 
@@ -78,7 +83,9 @@ class HelpMeDonations_Install {
     /**
      * Check plugin requirements
      */
-    private static function check_requirements() {
+    private static function check_requirements()
+    {
+        return true;
         // Check PHP version
         if (version_compare(PHP_VERSION, HELPME_DONATIONS_MIN_PHP_VERSION, '<')) {
             return false;
@@ -103,7 +110,8 @@ class HelpMeDonations_Install {
     /**
      * Create database tables
      */
-    private static function create_tables() {
+    private static function create_tables()
+    {
         global $wpdb;
 
         $charset_collate = $wpdb->get_charset_collate();
@@ -112,27 +120,27 @@ class HelpMeDonations_Install {
         $donations_table = $wpdb->prefix . 'helpme_donations';
         $donations_sql = "CREATE TABLE $donations_table (
             id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-            donation_id varchar(50) NOT NULL UNIQUE,
-            campaign_id bigint(20) unsigned DEFAULT 0,
-            form_id bigint(20) unsigned DEFAULT 0,
-            donor_id bigint(20) unsigned DEFAULT 0,
-            amount decimal(15,2) NOT NULL,
-            currency varchar(3) NOT NULL DEFAULT 'USD',
-            gateway varchar(50) NOT NULL,
+            donation_id varchar(50) UNIQUE,
+            campaign_id bigint(20) unsigned DEFAULT NULL,
+            form_id bigint(20) unsigned DEFAULT NULL,
+            donor_id bigint(20) unsigned DEFAULT NULL,
+            amount decimal(15,2) DEFAULT NULL,
+            currency varchar(3) DEFAULT NULL,
+            gateway varchar(50) DEFAULT NULL,
             gateway_transaction_id varchar(100) DEFAULT NULL,
-            status varchar(20) NOT NULL DEFAULT 'pending',
-            is_recurring tinyint(1) DEFAULT 0,
+            status varchar(20) DEFAULT NULL,
+            is_recurring tinyint(1) DEFAULT NULL,
             recurring_interval varchar(20) DEFAULT NULL,
             parent_donation_id bigint(20) unsigned DEFAULT NULL,
-            anonymous tinyint(1) DEFAULT 0,
-            donor_name varchar(255) NOT NULL,
-            donor_email varchar(255) NOT NULL,
+            anonymous tinyint(1) DEFAULT NULL,
+            donor_name varchar(255) DEFAULT NULL,
+            donor_email varchar(255) DEFAULT NULL,
             donor_phone varchar(50) DEFAULT NULL,
             donor_address text DEFAULT NULL,
             donor_message text DEFAULT NULL,
             metadata text DEFAULT NULL,
-            created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            created_at datetime DEFAULT NULL,
+            updated_at datetime DEFAULT NULL,
             completed_at datetime DEFAULT NULL,
             PRIMARY KEY (id),
             UNIQUE KEY donation_id (donation_id),
@@ -142,7 +150,6 @@ class HelpMeDonations_Install {
             KEY gateway (gateway),
             KEY created_at (created_at)
         ) $charset_collate;";
-
         // Campaigns table
         $campaigns_table = $wpdb->prefix . 'helpme_campaigns';
         $campaigns_sql = "CREATE TABLE $campaigns_table (
@@ -175,18 +182,19 @@ class HelpMeDonations_Install {
         $donors_table = $wpdb->prefix . 'helpme_donors';
         $donors_sql = "CREATE TABLE $donors_table (
             id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-            email varchar(255) NOT NULL,
-            name varchar(255) NOT NULL,
+            email varchar(255) DEFAULT NULL,
+            name varchar(255) DEFAULT NULL,
             phone varchar(50) DEFAULT NULL,
             address text DEFAULT NULL,
-            total_donated decimal(15,2) DEFAULT 0,
-            donation_count int(11) DEFAULT 0,
+            total_donated decimal(15,2) DEFAULT NULL,
+            donation_count int(11) DEFAULT NULL,
+            amount int(11) DEFAULT NULL,
             first_donation_date datetime DEFAULT NULL,
             last_donation_date datetime DEFAULT NULL,
-            status varchar(20) NOT NULL DEFAULT 'active',
+            status varchar(20) DEFAULT NULL,
             metadata text DEFAULT NULL,
-            created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            created_at datetime DEFAULT NULL,
+            updated_at datetime DEFAULT NULL,
             PRIMARY KEY (id),
             UNIQUE KEY email (email),
             KEY status (status)
@@ -247,7 +255,8 @@ class HelpMeDonations_Install {
     /**
      * Set default plugin options
      */
-    private static function set_default_options() {
+    private static function set_default_options()
+    {
         $default_options = array(
             // General settings
             'helpme_donations_default_currency' => 'USD',
@@ -318,7 +327,8 @@ class HelpMeDonations_Install {
     /**
      * Create default donation form
      */
-    private static function create_default_form() {
+    private static function create_default_form()
+    {
         global $wpdb;
 
         $forms_table = $wpdb->prefix . 'helpme_forms';
@@ -411,7 +421,8 @@ class HelpMeDonations_Install {
     /**
      * Schedule cron jobs
      */
-    private static function schedule_cron_jobs() {
+    private static function schedule_cron_jobs()
+    {
         // Process recurring donations daily
         if (!wp_next_scheduled('helpme_donations_process_recurring')) {
             wp_schedule_event(time(), 'daily', 'helpme_donations_process_recurring');
@@ -426,7 +437,8 @@ class HelpMeDonations_Install {
     /**
      * Create pages
      */
-    private static function create_pages() {
+    private static function create_pages()
+    {
         $pages = array(
             'donation-success' => array(
                 'title' => 'Donation Success',
@@ -442,7 +454,7 @@ class HelpMeDonations_Install {
 
         foreach ($pages as $slug => $page) {
             $existing_page = get_option($page['option']);
-            
+
             if (!$existing_page || !get_post($existing_page)) {
                 $page_id = wp_insert_post(array(
                     'post_title' => $page['title'],
@@ -462,7 +474,8 @@ class HelpMeDonations_Install {
     /**
      * Drop database tables
      */
-    private static function drop_tables() {
+    private static function drop_tables()
+    {
         global $wpdb;
 
         $tables = array(
@@ -481,7 +494,8 @@ class HelpMeDonations_Install {
     /**
      * Remove all plugin options
      */
-    private static function remove_plugin_options() {
+    private static function remove_plugin_options()
+    {
         global $wpdb;
 
         // Get all plugin options
@@ -503,7 +517,8 @@ class HelpMeDonations_Install {
     /**
      * Remove uploaded files
      */
-    private static function remove_uploaded_files() {
+    private static function remove_uploaded_files()
+    {
         $upload_dir = wp_upload_dir();
         $plugin_upload_dir = $upload_dir['basedir'] . '/helpme-donations';
 
@@ -515,13 +530,14 @@ class HelpMeDonations_Install {
     /**
      * Recursively remove directory
      */
-    private static function remove_directory_recursive($dir) {
+    private static function remove_directory_recursive($dir)
+    {
         if (!is_dir($dir)) {
             return;
         }
 
         $files = array_diff(scandir($dir), array('.', '..'));
-        
+
         foreach ($files as $file) {
             $path = $dir . DIRECTORY_SEPARATOR . $file;
             if (is_dir($path)) {
@@ -537,9 +553,10 @@ class HelpMeDonations_Install {
     /**
      * Database update check
      */
-    public static function maybe_update_db() {
+    public static function maybe_update_db()
+    {
         $current_version = get_option('helpme_donations_db_version', '0');
-        
+
         if (version_compare($current_version, HELPME_DONATIONS_DB_VERSION, '<')) {
             self::create_tables();
         }

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Plugin Name: Help Me Donations
  * Plugin URI: https://github.com/yourusername/helpme-donations
@@ -40,7 +41,8 @@ define('ZIM_DONATIONS_PLUGIN_DIR', HELPME_DONATIONS_PLUGIN_DIR);
 /**
  * Main Plugin Class
  */
-final class HelpMeDonations {
+final class HelpMeDonations
+{
 
     /**
      * Plugin instance
@@ -61,7 +63,8 @@ final class HelpMeDonations {
     /**
      * Get plugin instance
      */
-    public static function instance() {
+    public static function instance()
+    {
         if (null === self::$instance) {
             self::$instance = new self();
         }
@@ -71,7 +74,8 @@ final class HelpMeDonations {
     /**
      * Constructor
      */
-    private function __construct() {
+    private function __construct()
+    {
         $this->init_hooks();
         $this->load_dependencies();
         $this->init_components();
@@ -80,7 +84,8 @@ final class HelpMeDonations {
     /**
      * Initialize hooks
      */
-    private function init_hooks() {
+    private function init_hooks()
+    {
         register_activation_hook(__FILE__, array($this, 'activate'));
         register_deactivation_hook(__FILE__, array($this, 'deactivate'));
         register_uninstall_hook(__FILE__, array('HelpMeDonations_Install', 'uninstall'));
@@ -94,7 +99,8 @@ final class HelpMeDonations {
     /**
      * Load plugin dependencies
      */
-    private function load_dependencies() {
+    private function load_dependencies()
+    {
         // Core classes
         require_once HELPME_DONATIONS_PLUGIN_DIR . 'includes/class-zim-donations-install.php';
         require_once HELPME_DONATIONS_PLUGIN_DIR . 'includes/class-zim-donations-db.php';
@@ -111,12 +117,15 @@ final class HelpMeDonations {
         require_once HELPME_DONATIONS_PLUGIN_DIR . 'includes/gateways/paynow.php';
         require_once HELPME_DONATIONS_PLUGIN_DIR . 'includes/gateways/class-inbucks.php';
         require_once HELPME_DONATIONS_PLUGIN_DIR . 'includes/gateways/class-zimswitch.php';
+        require_once HELPME_DONATIONS_PLUGIN_DIR . 'includes/api/api.php';
+        require_once HELPME_DONATIONS_PLUGIN_DIR . 'includes/api/paynow_helper.php';
     }
 
     /**
      * Initialize plugin components
      */
-    private function init_components() {
+    private function init_components()
+    {
         $this->db = new HelpMeDonations_DB();
         $this->admin = new HelpMeDonations_Admin();
         $this->payment_gateways = new ZimDonations_Payment_Gateways();
@@ -129,21 +138,24 @@ final class HelpMeDonations {
     /**
      * Plugin activation
      */
-    public function activate() {
+    public function activate()
+    {
         HelpMeDonations_Install::activate();
     }
 
     /**
      * Plugin deactivation
      */
-    public function deactivate() {
+    public function deactivate()
+    {
         HelpMeDonations_Install::deactivate();
     }
 
     /**
      * Load plugin textdomain
      */
-    public function load_textdomain() {
+    public function load_textdomain()
+    {
         load_plugin_textdomain(
             'helpme-donations',
             false,
@@ -154,7 +166,8 @@ final class HelpMeDonations {
     /**
      * Initialize plugin
      */
-    public function init() {
+    public function init()
+    {
         // Check for database updates
         HelpMeDonations_Install::maybe_update_db();
 
@@ -167,12 +180,15 @@ final class HelpMeDonations {
         // Handle donation processing
         add_action('wp_ajax_process_donation', array($this, 'process_donation'));
         add_action('wp_ajax_nopriv_process_donation', array($this, 'process_donation'));
+        add_action('wp_ajax_helpme_submit_paynow_donation', 'helpme_submit_paynow_donation');
+        add_action('wp_ajax_nopriv_helpme_submit_paynow_donation', 'helpme_submit_paynow_donation');
     }
 
     /**
      * Register shortcodes
      */
-    private function register_shortcodes() {
+    private function register_shortcodes()
+    {
         add_shortcode('helpme_donation_form', array($this, 'donation_form_shortcode'));
         add_shortcode('helpme_campaign_progress', array($this, 'campaign_progress_shortcode'));
         add_shortcode('helpme_donation_success', array($this, 'donation_success_shortcode'));
@@ -181,7 +197,8 @@ final class HelpMeDonations {
     /**
      * Handle webhook requests
      */
-    private function handle_webhooks() {
+    private function handle_webhooks()
+    {
         if (isset($_GET['helpme-donations-webhook']) && isset($_GET['gateway'])) {
             $gateway_id = sanitize_text_field($_GET['gateway']);
             $this->payment_gateways->handle_webhook($gateway_id);
@@ -191,7 +208,8 @@ final class HelpMeDonations {
     /**
      * Process donation AJAX
      */
-    public function process_donation() {
+    public function process_donation()
+    {
         check_ajax_referer('helpme_donations_nonce', 'nonce');
 
         $donation_data = array(
@@ -222,7 +240,8 @@ final class HelpMeDonations {
     /**
      * Donation form shortcode
      */
-    public function donation_form_shortcode($atts) {
+    public function donation_form_shortcode($atts)
+    {
         $atts = shortcode_atts(array(
             'form_id' => 0,
             'campaign_id' => 0,
@@ -239,7 +258,8 @@ final class HelpMeDonations {
     /**
      * Campaign progress shortcode
      */
-    public function campaign_progress_shortcode($atts) {
+    public function campaign_progress_shortcode($atts)
+    {
         $atts = shortcode_atts(array(
             'campaign_id' => 0,
             'show_amount' => 'true',
@@ -253,32 +273,34 @@ final class HelpMeDonations {
     /**
      * Donation success shortcode
      */
-    public function donation_success_shortcode($atts) {
+    public function donation_success_shortcode($atts)
+    {
         $atts = shortcode_atts(array(
             'title' => 'Thank You!',
             'message' => 'Your donation has been processed successfully.'
         ), $atts, 'helpme_donation_success');
 
         ob_start();
-        ?>
+?>
         <div class="helpme-donation-success">
             <h2><?php echo esc_html($atts['title']); ?></h2>
             <p><?php echo esc_html($atts['message']); ?></p>
-            
+
             <?php if (isset($_GET['donation_id'])): ?>
                 <div class="donation-details">
                     <p><strong><?php _e('Donation ID:', 'helpme-donations'); ?></strong> <?php echo esc_html($_GET['donation_id']); ?></p>
                 </div>
             <?php endif; ?>
         </div>
-        <?php
+<?php
         return ob_get_clean();
     }
 
     /**
      * Enqueue frontend scripts
      */
-    public function enqueue_frontend_scripts() {
+    public function enqueue_frontend_scripts()
+    {
         // CSS
         wp_enqueue_style(
             'helpme-donations-frontend',
@@ -311,7 +333,8 @@ final class HelpMeDonations {
     /**
      * Enqueue admin scripts
      */
-    public function enqueue_admin_scripts($hook) {
+    public function enqueue_admin_scripts($hook)
+    {
         // Only load on plugin pages
         if (strpos($hook, 'helpme-donations') === false) {
             return;
@@ -351,7 +374,8 @@ final class HelpMeDonations {
 /**
  * Get main plugin instance
  */
-function helpme_donations() {
+function helpme_donations()
+{
     return HelpMeDonations::instance();
 }
 

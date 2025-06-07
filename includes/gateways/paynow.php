@@ -131,7 +131,7 @@ class ZimDonations_Gateway_Paynow {
                 <div class="phone-input-group">
                     <span class="country-code">+263</span>
                     <input type="tel" id="paynow-phone" name="phone" placeholder="77 123 4567" required
-                           pattern="[0-9]{9}" maxlength="9" class="paynow-phone-field">
+                            maxlength="9" class="paynow-phone-field">
                 </div>
                 <small class="help-text">
                     <?php _e('Enter your mobile number without the country code', 'zim-donations'); ?>

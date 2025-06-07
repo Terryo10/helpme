@@ -291,18 +291,18 @@ class HelpMeDonations_Form_Builder {
                 <div class="phone-input-group">
                     <span class="country-code">+263</span>
                     <input type="tel" id="paynow-phone" name="phone" placeholder="77 123 4567" required 
-                           pattern="[0-9]{9}" maxlength="9" class="phone-input">
+                            maxlength="9" class="phone-input">
                 </div>
                 <small class="help-text"><?php _e('Enter your mobile number without the country code', 'helpme-donations'); ?></small>
             </div>
 
             <div class="payment-actions">
-                <button type="button" id="paynow-pay-button" class="gateway-pay-button">
+                <!-- <button type="button" id="paynow-pay-button" class="gateway-pay-button">
                     <span class="button-text">
                         <?php printf(__('Pay %s', 'helpme-donations'), $this->format_currency($donation_data['amount'], $donation_data['currency'])); ?>
                     </span>
                     <span class="button-spinner" style="display: none;"></span>
-                </button>
+                </button> -->
             </div>
 
             <div class="security-notice">
@@ -311,6 +311,7 @@ class HelpMeDonations_Form_Builder {
         </div>
 
         <script>
+           
         document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('paynow-pay-button').addEventListener('click', function() {
                 const phone = document.getElementById('paynow-phone').value;
@@ -326,6 +327,7 @@ class HelpMeDonations_Form_Builder {
         });
 
         function handlePaynowPayment(method, phone) {
+            alert(method)
             console.log('Processing Paynow payment...');
             // Implementation for Paynow payment processing
         }
