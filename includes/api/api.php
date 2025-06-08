@@ -97,11 +97,10 @@ function helpme_submit_paynow_donation()
 
             if ($response->success()) {
                 $pollUrl = $response->pollUrl();
-
                 $wpdb->update(
                     $donations_table,
-                    ['poll_url' =>  "$pollUrl"],
-                    ['donation_id' => $donation_id]
+                    ['poll_url' =>  $pollUrl],
+                    ['id' => $wpdb->insert_id]
                 );
                 $status = $paynow->pollTransaction($pollUrl);
 
@@ -111,7 +110,7 @@ function helpme_submit_paynow_donation()
                     $wpdb->update(
                         $donations_table,
                         ['status' =>  'paid'],
-                        ['donation_id' => $donation_id]
+                        ['id' => $wpdb->insert_id]
                     );
                     wp_send_json_success(['message' => "Payment successful", 'poll_url' => $pollUrl]);
                 } else {
@@ -120,7 +119,7 @@ function helpme_submit_paynow_donation()
                     $wpdb->update(
                         $donations_table,
                         ['status' =>  'cancelled'],
-                        ['donation_id' => $donation_id]
+                        ['id' => $wpdb->insert_id]
                     );
                     wp_send_json_error(['message' => "Payment was not successful", 'poll_url' => $pollUrl]);
                 }
@@ -157,7 +156,7 @@ function check_paynow_payment_status()
     // Step 1: Find the donation by poll_url
     $donations_table = $wpdb->prefix . 'helpme_donations';
     $donation_id = $wpdb->get_var($wpdb->prepare(
-        "SELECT donation_id FROM $donations_table WHERE poll_url = %s",
+        "SELECT id FROM $donations_table WHERE poll_url = %s",
         $poll_url
     ));
 
