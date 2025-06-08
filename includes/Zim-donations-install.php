@@ -112,14 +112,15 @@ class HelpMeDonations_Install
      */
     private static function create_tables()
     {
-        global $wpdb;
+        try {
+            global $wpdb;
 
-        $charset_collate = $wpdb->get_charset_collate();
+            $charset_collate = $wpdb->get_charset_collate();
 
-        // Donations table
-        $donations_table = $wpdb->prefix . 'helpme_donations';
+            // Donations table
+            $donations_table = $wpdb->prefix . 'helpme_donations';
 
-        $donations_sql = "CREATE TABLE $donations_table (
+            $donations_sql = "CREATE TABLE $donations_table (
             id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
             donation_id varchar(50) DEFAULT NULL,
             campaign_id bigint(20) unsigned DEFAULT NULL,
@@ -153,9 +154,9 @@ class HelpMeDonations_Install
             KEY created_at (created_at)
         ) $charset_collate;";
 
-        // Campaigns table
-        $campaigns_table = $wpdb->prefix . 'helpme_campaigns';
-        $campaigns_sql = "CREATE TABLE $campaigns_table (
+            // Campaigns table
+            $campaigns_table = $wpdb->prefix . 'helpme_campaigns';
+            $campaigns_sql = "CREATE TABLE $campaigns_table (
             id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
             title varchar(255) NOT NULL,
             slug varchar(255) NOT NULL,
@@ -181,9 +182,9 @@ class HelpMeDonations_Install
             KEY created_by (created_by)
         ) $charset_collate;";
 
-        // Donors table
-        $donors_table = $wpdb->prefix . 'helpme_donors';
-        $donors_sql = "CREATE TABLE $donors_table (
+            // Donors table
+            $donors_table = $wpdb->prefix . 'helpme_donors';
+            $donors_sql = "CREATE TABLE $donors_table (
             id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
             email varchar(255) NOT NULL,
             name varchar(255) NOT NULL,
@@ -202,9 +203,9 @@ class HelpMeDonations_Install
             KEY status (status)
         ) $charset_collate;";
 
-        // Transactions table
-        $transactions_table = $wpdb->prefix . 'helpme_transactions';
-        $transactions_sql = "CREATE TABLE $transactions_table (
+            // Transactions table
+            $transactions_table = $wpdb->prefix . 'helpme_transactions';
+            $transactions_sql = "CREATE TABLE $transactions_table (
             id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
             donation_id bigint(20) unsigned NOT NULL,
             transaction_id varchar(100) NOT NULL,
@@ -226,9 +227,9 @@ class HelpMeDonations_Install
             KEY type (type)
         ) $charset_collate;";
 
-        // Forms table
-        $forms_table = $wpdb->prefix . 'helpme_forms';
-        $forms_sql = "CREATE TABLE $forms_table (
+            // Forms table
+            $forms_table = $wpdb->prefix . 'helpme_forms';
+            $forms_sql = "CREATE TABLE $forms_table (
             id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
             name varchar(255) NOT NULL,
             config text NOT NULL,
@@ -242,16 +243,20 @@ class HelpMeDonations_Install
             KEY created_by (created_by)
         ) $charset_collate;";
 
-        require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+            require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
 
-        dbDelta($donations_sql);
-        dbDelta($campaigns_sql);
-        dbDelta($donors_sql);
-        dbDelta($transactions_sql);
-        dbDelta($forms_sql);
+            dbDelta($donations_sql);
+            dbDelta($campaigns_sql);
+            dbDelta($donors_sql);
+            dbDelta($transactions_sql);
+            dbDelta($forms_sql);
 
-        // Update database version
-        update_option('helpme_donations_db_version', HELPME_DONATIONS_DB_VERSION);
+            // Update database version
+            update_option('helpme_donations_db_version', HELPME_DONATIONS_DB_VERSION);
+        } catch (Exception $error) {
+            deactivate_plugins(HELPME_DONATIONS_PLUGIN_BASENAME);
+            wp_die(__($error->getMessage(), 'helpme-donations'));
+        }
     }
 
     /**
