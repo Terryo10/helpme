@@ -479,7 +479,7 @@ jQuery(document).ready(function ($) {
     const paymentContainer = form.find(".payment-form-container");
     paymentContainer.html(`
             <div style="text-align: center; padding: 40px;">
-                <div class="loading-spinner">Gene Piki</div>
+                <div class="loading-spinner"></div>
                 <p style="margin-top: 20px; color: #666;">${helpmeDonations.i18n.processing}</p>
             </div>
         `);
@@ -622,8 +622,6 @@ jQuery(document).ready(function ($) {
             paymentCompleted(response.data);
           }
         } else if (response.data?.poll_url) {
-          alert(response?.data?.poll_url)
-
           showMessage(
             response.data.message || "Payment processing failed",
 
@@ -631,11 +629,9 @@ jQuery(document).ready(function ($) {
             response?.data?.poll_url
           );
         } else {
-          alert(response?.data?.poll_url)
           showMessage(
             response.data.message || "Payment processing failed",
-            "error",
-            response?.data?.poll_url
+            "error"
           );
         }
       },

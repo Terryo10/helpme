@@ -5,7 +5,7 @@
  * Plugin URI: https://github.com/yourusername/helpme-donations
  * Description: A comprehensive WordPress donation plugin supporting Zimbabwean and international payment methods with customizable forms, multi-currency support, and subscription-based premium features.
  * Version: 1.0.0
- * Author: Tapiwa Tererai
+ * Author: Tapiwa Tererai And Gene Piki
  * Author URI: https://yourwebsite.com
  * License: GPL v2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
