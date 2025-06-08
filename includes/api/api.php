@@ -143,6 +143,23 @@ function helpme_submit_paynow_donation()
     }
 }
 
+function get_donation_success_url()
+{
+    $success_page_id = get_option('helpme_donations_success_page');
+    if ($success_page_id && get_post_status($success_page_id) === 'publish') {
+        return get_permalink($success_page_id);
+    }
+    return home_url(); // fallback
+}
+function get_donation_error_url()
+{
+    $error_page_id = get_option('helpme_donations_cancelled_page');
+    if ($error_page_id && get_post_status($error_page_id) === 'publish') {
+        return get_permalink($error_page_id);
+    }
+    return home_url(); // fallback
+}
+
 function check_paynow_payment_status()
 {
     global $wpdb;
@@ -204,13 +221,15 @@ function initiatingPayment($id)
     // Paynow Setup
     $integration_id  = get_option('helpme_donations_paynow_integration_id');
     $integration_key = get_option('helpme_donations_paynow_integration_key');
+    $result_url = get_donation_success_url();
+    $return_url = get_donation_error_url();
     $paynow = new Paynow\Payments\Paynow(
         "$integration_id",
         "$integration_key",
-        "https://staysure.co.zw/test/test.php?transaction_id=$id",
+        "$result_url",
 
         // The return url can be set at later stages. You might want to do this if you want to pass data to the return url (like the reference of the transaction)
-        "https://staysure.co.zw/test/test.php?transaction_id=$id"
+        "$return_url"
     );
     return $paynow;
 }
