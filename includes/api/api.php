@@ -97,14 +97,12 @@ function helpme_submit_paynow_donation()
 
             if ($response->success()) {
                 $pollUrl = $response->pollUrl();
-                if ($donations !== false) {
-                    // Now update poll_url for that donation
-                    $wpdb->update(
-                        $donations_table,
-                        ['poll_url' =>  $pollUrl],
-                        ['donation_id' => $donation_id]
-                    );
-                }
+
+                $wpdb->update(
+                    $donations_table,
+                    ['poll_url' =>  "$pollUrl"],
+                    ['donation_id' => $donation_id]
+                );
                 $status = $paynow->pollTransaction($pollUrl);
 
                 if ($status->paid()) {
@@ -132,46 +130,6 @@ function helpme_submit_paynow_donation()
                     'debug'   => ""
                 ]);
             }
-
-            // $reference       = $donation_id;
-            // $additional_info = "Donation by $name";
-            // $status          = 'Message';
-            // $method          = 'ecocash';
-
-            // $post_data = [
-            //     'resulturl'      => $result_url,
-            //     'returnurl'      => $return_url,
-            //     'reference'      => $reference,
-            //     'amount'         => number_format($amount, 2, '.', ''),
-            //     'id'             => $integration_id,
-            //     'additionalinfo' => $additional_info,
-            //     'authemail'      => $email,
-            //     'status'         => $status,
-            //     'method'         => $method,
-            //     'phone'          => '0' . $phone
-            // ];
-
-            // // $post_data['hash'] = createHash($post_data, $integration_key);
-            // $fields_string = (new WC_Paynow_Helper())->CreateMsg($post_data, $integration_key);
-
-
-            // $response = wp_remote_request($paynow_url, [
-            //     'body'    => $fields_string,
-            //     'method' => 'POST',
-            //     'timeout' => 45
-            // ]);
-
-            // if (is_wp_error($response)) {
-            //     wp_send_json_error(['message' => 'Could not connect to Paynow.']);
-            // }
-
-            // parse_str(wp_remote_retrieve_body($response), $response_data);
-
-            // if (isset($response_data['status']) && $response_data['status'] === 'Ok') {
-            //     wp_send_json_success(['redirect_url' => $response_data['browserurl']]);
-            // } else {
-            //     wp_send_json_error(['message' => $response_data['error'] . "Paynow error" ?? 'Payment initiation failed.']);
-            // }
         } else {
             wp_send_json_error(['message' => 'Another payment method coming soon...']);
         }
