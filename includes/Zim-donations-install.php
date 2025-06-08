@@ -116,44 +116,138 @@ class HelpMeDonations_Install
 
         $charset_collate = $wpdb->get_charset_collate();
 
-        // Only create tables if they don't exist
+        // Donations table
         $donations_table = $wpdb->prefix . 'helpme_donations';
-        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$donations_table'") === $donations_table;
 
-        if (!$table_exists) {
-            // Donations table
-            $donations_sql = "CREATE TABLE $donations_table (
-                id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-                donation_id varchar(50) NOT NULL DEFAULT 1,
-                campaign_id bigint(20) unsigned DEFAULT 0,
-                form_id bigint(20) unsigned DEFAULT 0,
-                donor_id bigint(20) unsigned DEFAULT 0,
-                amount decimal(15,2) NOT NULL DEFAULT 0,
-                currency varchar(3) NOT NULL DEFAULT 'USD',
-                gateway varchar(50) NOT NULL DEFAULT 'ecocash',
-                gateway_transaction_id varchar(100) DEFAULT NULL,
-                status varchar(20) NOT NULL DEFAULT 'pending',
-                is_recurring tinyint(1) DEFAULT 0,
-                recurring_interval varchar(20) DEFAULT NULL,
-                parent_donation_id bigint(20) unsigned DEFAULT NULL,
-                anonymous tinyint(1) DEFAULT 0,
-                donor_name varchar(255) NOT NULL,
-                donor_email varchar(255) NOT NULL,
-                donor_phone varchar(50) DEFAULT NULL,
-                donor_address text DEFAULT NULL,
-                donor_message text DEFAULT NULL,
-                poll_url text DEFAULT NULL,
-                metadata text DEFAULT NULL,
-                created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-                completed_at datetime DEFAULT NULL,
-                PRIMARY KEY (id),
-                KEY created_at (created_at)
-            ) $charset_collate;";
+        $donations_sql = "CREATE TABLE $donations_table (
+           id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+            donation_id varchar(50) DEFAULT NULL,
+            campaign_id bigint(20) unsigned DEFAULT NULL,
+            form_id bigint(20) unsigned DEFAULT NULL,
+            donor_id bigint(20) unsigned DEFAULT NULL,
+            amount decimal(15,2) DEFAULT NULL,
+            currency varchar(3) DEFAULT NULL,
+            gateway varchar(50) DEFAULT NULL,
+            gateway_transaction_id varchar(100) DEFAULT NULL,
+            status varchar(20) DEFAULT NULL,
+            is_recurring tinyint(1) DEFAULT NULL,
+            recurring_interval varchar(20) DEFAULT NULL,
+            parent_donation_id bigint(20) unsigned DEFAULT NULL,
+            anonymous tinyint(1) DEFAULT NULL,
+            donor_name varchar(255) DEFAULT NULL,
+            donor_email varchar(255) DEFAULT NULL,
+            donor_phone varchar(50) DEFAULT NULL,
+            donor_address text DEFAULT NULL,
+            donor_message text DEFAULT NULL,
+            metadata text DEFAULT NULL,
+            created_at datetime DEFAULT NULL,
+            updated_at datetime DEFAULT NULL,
+            completed_at datetime DEFAULT NULL,
+            PRIMARY KEY (id),
+            UNIQUE KEY donation_id (donation_id),
+            KEY campaign_id (campaign_id),
+            KEY donor_id (donor_id),
+            KEY status (status),
+            KEY gateway (gateway),
+            KEY created_at (created_at)
+        ) $charset_collate;";
 
-            require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
-            dbDelta($donations_sql);
-        }
+        // Campaigns table
+        $campaigns_table = $wpdb->prefix . 'helpme_campaigns';
+        $campaigns_sql = "CREATE TABLE $campaigns_table (
+            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+            title varchar(255) NOT NULL,
+            slug varchar(255) NOT NULL,
+            description text DEFAULT NULL,
+            goal_amount decimal(15,2) DEFAULT NULL,
+            currency varchar(3) NOT NULL DEFAULT 'USD',
+            raised_amount decimal(15,2) DEFAULT 0,
+            donor_count int(11) DEFAULT 0,
+            category varchar(100) DEFAULT NULL,
+            image_url varchar(500) DEFAULT NULL,
+            video_url varchar(500) DEFAULT NULL,
+            start_date datetime DEFAULT NULL,
+            end_date datetime DEFAULT NULL,
+            status varchar(20) NOT NULL DEFAULT 'active',
+            created_by bigint(20) unsigned NOT NULL DEFAULT 1,
+            metadata text DEFAULT NULL,
+            created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            UNIQUE KEY slug (slug),
+            KEY status (status),
+            KEY category (category),
+            KEY created_by (created_by)
+        ) $charset_collate;";
+
+        // Donors table
+        $donors_table = $wpdb->prefix . 'helpme_donors';
+        $donors_sql = "CREATE TABLE $donors_table (
+            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+            email varchar(255) NOT NULL,
+            name varchar(255) NOT NULL,
+            phone varchar(50) DEFAULT NULL,
+            address text DEFAULT NULL,
+            total_donated decimal(15,2) DEFAULT 0,
+            donation_count int(11) DEFAULT 0,
+            first_donation_date datetime DEFAULT NULL,
+            last_donation_date datetime DEFAULT NULL,
+            status varchar(20) NOT NULL DEFAULT 'active',
+            metadata text DEFAULT NULL,
+            created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            UNIQUE KEY email (email),
+            KEY status (status)
+        ) $charset_collate;";
+
+        // Transactions table
+        $transactions_table = $wpdb->prefix . 'helpme_transactions';
+        $transactions_sql = "CREATE TABLE $transactions_table (
+            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+            donation_id bigint(20) unsigned NOT NULL,
+            transaction_id varchar(100) NOT NULL,
+            gateway varchar(50) NOT NULL,
+            gateway_transaction_id varchar(100) DEFAULT NULL,
+            type varchar(20) NOT NULL DEFAULT 'payment',
+            status varchar(20) NOT NULL DEFAULT 'pending',
+            amount decimal(15,2) NOT NULL,
+            currency varchar(3) NOT NULL,
+            gateway_response text DEFAULT NULL,
+            notes text DEFAULT NULL,
+            created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            KEY donation_id (donation_id),
+            KEY transaction_id (transaction_id),
+            KEY gateway (gateway),
+            KEY status (status),
+            KEY type (type)
+        ) $charset_collate;";
+
+        // Forms table
+        $forms_table = $wpdb->prefix . 'helpme_forms';
+        $forms_sql = "CREATE TABLE $forms_table (
+            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+            name varchar(255) NOT NULL,
+            config text NOT NULL,
+            status varchar(20) NOT NULL DEFAULT 'active',
+            usage_count int(11) DEFAULT 0,
+            created_by bigint(20) unsigned NOT NULL DEFAULT 1,
+            created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            KEY status (status),
+            KEY created_by (created_by)
+        ) $charset_collate;";
+
+        require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+
+        dbDelta($donations_sql);
+        dbDelta($campaigns_sql);
+        dbDelta($donors_sql);
+        dbDelta($transactions_sql);
+        dbDelta($forms_sql);
 
         // Update database version
         update_option('helpme_donations_db_version', HELPME_DONATIONS_DB_VERSION);
