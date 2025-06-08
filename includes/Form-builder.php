@@ -3,8 +3,9 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class HelpMeDonations_Form_Builder {
-    
+class HelpMeDonations_Form_Builder
+{
+
     /**
      * Payment gateways instance
      */
@@ -15,7 +16,8 @@ class HelpMeDonations_Form_Builder {
      */
     private $available_gateways = array();
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->get_payment_gateways();
         $this->init_hooks();
     }
@@ -23,7 +25,8 @@ class HelpMeDonations_Form_Builder {
     /**
      * Get array of available payment gateways
      */
-    private function get_payment_gateways() {
+    private function get_payment_gateways()
+    {
         // Check if payment gateways class exists
         if (class_exists('ZimDonations_Payment_Gateways')) {
             $this->payment_gateways = new ZimDonations_Payment_Gateways();
@@ -38,25 +41,28 @@ class HelpMeDonations_Form_Builder {
     /**
      * Get available gateways (public method)
      */
-    public function get_available_gateways() {
+    public function get_available_gateways()
+    {
         return $this->available_gateways;
     }
 
-    private function init_hooks() {
+    private function init_hooks()
+    {
         add_action('wp_enqueue_scripts', array($this, 'enqueue_form_scripts'));
         add_action('wp_ajax_get_gateway_payment_form', array($this, 'ajax_get_gateway_payment_form'));
         add_action('wp_ajax_nopriv_get_gateway_payment_form', array($this, 'ajax_get_gateway_payment_form'));
     }
 
-    public function enqueue_form_scripts() {
+    public function enqueue_form_scripts()
+    {
         wp_enqueue_style('helpme-donations-form', plugins_url('assets/css/form.css', dirname(__FILE__)));
         wp_enqueue_script('helpme-donations-form', plugins_url('assets/js/form.js', dirname(__FILE__)), array('jquery'), '1.0.0', true);
-        
+
         // Enqueue Stripe JS if Stripe is enabled
         if ($this->is_gateway_enabled('stripe')) {
             wp_enqueue_script('stripe-js', 'https://js.stripe.com/v3/', array(), '3.0', true);
         }
-        
+
         // Localize script with form data
         wp_localize_script('helpme-donations-form', 'helpmeDonations', array(
             'ajaxurl' => admin_url('admin-ajax.php'),
@@ -81,7 +87,8 @@ class HelpMeDonations_Form_Builder {
     /**
      * AJAX handler to get gateway-specific payment form
      */
-    public function ajax_get_gateway_payment_form() {
+    public function ajax_get_gateway_payment_form()
+    {
         check_ajax_referer('helpme_donations_nonce', 'nonce');
 
         $gateway_id = sanitize_text_field($_POST['gateway_id']);
@@ -108,7 +115,8 @@ class HelpMeDonations_Form_Builder {
     /**
      * Get gateway-specific payment form
      */
-    private function get_gateway_payment_form($gateway_id, $donation_data) {
+    private function get_gateway_payment_form($gateway_id, $donation_data)
+    {
         switch ($gateway_id) {
             case 'stripe':
                 return $this->get_stripe_payment_form($donation_data);
@@ -128,9 +136,10 @@ class HelpMeDonations_Form_Builder {
     /**
      * Get Stripe payment form
      */
-    private function get_stripe_payment_form($donation_data) {
+    private function get_stripe_payment_form($donation_data)
+    {
         ob_start();
-        ?>
+?>
         <div class="stripe-payment-form gateway-form">
             <div class="payment-method-info">
                 <h5><?php _e('Credit/Debit Card Payment', 'helpme-donations'); ?></h5>
@@ -169,56 +178,57 @@ class HelpMeDonations_Form_Builder {
         </div>
 
         <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            if (typeof Stripe !== 'undefined' && helpmeDonations.stripe_publishable_key) {
-                const stripe = Stripe(helpmeDonations.stripe_publishable_key);
-                const elements = stripe.elements();
+            document.addEventListener('DOMContentLoaded', function() {
+                if (typeof Stripe !== 'undefined' && helpmeDonations.stripe_publishable_key) {
+                    const stripe = Stripe(helpmeDonations.stripe_publishable_key);
+                    const elements = stripe.elements();
 
-                const cardElement = elements.create('card', {
-                    style: {
-                        base: {
-                            fontSize: '16px',
-                            color: '#424770',
-                            '::placeholder': {
-                                color: '#aab7c4',
+                    const cardElement = elements.create('card', {
+                        style: {
+                            base: {
+                                fontSize: '16px',
+                                color: '#424770',
+                                '::placeholder': {
+                                    color: '#aab7c4',
+                                },
                             },
                         },
-                    },
-                });
+                    });
 
-                cardElement.mount('#stripe-card-element');
+                    cardElement.mount('#stripe-card-element');
 
-                cardElement.on('change', function(event) {
-                    const displayError = document.getElementById('stripe-card-errors');
-                    if (event.error) {
-                        displayError.textContent = event.error.message;
-                        displayError.style.display = 'block';
-                    } else {
-                        displayError.style.display = 'none';
-                    }
-                });
+                    cardElement.on('change', function(event) {
+                        const displayError = document.getElementById('stripe-card-errors');
+                        if (event.error) {
+                            displayError.textContent = event.error.message;
+                            displayError.style.display = 'block';
+                        } else {
+                            displayError.style.display = 'none';
+                        }
+                    });
 
-                document.getElementById('stripe-pay-button').addEventListener('click', function() {
-                    handleStripePayment(stripe, cardElement);
-                });
+                    document.getElementById('stripe-pay-button').addEventListener('click', function() {
+                        handleStripePayment(stripe, cardElement);
+                    });
+                }
+            });
+
+            function handleStripePayment(stripe, cardElement) {
+                // Implementation for Stripe payment processing
+                console.log('Processing Stripe payment...');
             }
-        });
-
-        function handleStripePayment(stripe, cardElement) {
-            // Implementation for Stripe payment processing
-            console.log('Processing Stripe payment...');
-        }
         </script>
-        <?php
+    <?php
         return ob_get_clean();
     }
 
     /**
      * Get PayPal payment form
      */
-    private function get_paypal_payment_form($donation_data) {
+    private function get_paypal_payment_form($donation_data)
+    {
         ob_start();
-        ?>
+    ?>
         <div class="paypal-payment-form gateway-form">
             <div class="payment-method-info">
                 <h5><?php _e('PayPal Payment', 'helpme-donations'); ?></h5>
@@ -236,31 +246,32 @@ class HelpMeDonations_Form_Builder {
 
         <script src="https://www.paypal.com/sdk/js?client-id=<?php echo esc_attr($this->get_paypal_client_id()); ?>&currency=<?php echo esc_attr($donation_data['currency']); ?>"></script>
         <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            if (typeof paypal !== 'undefined') {
-                paypal.Buttons({
-                    createOrder: function(data, actions) {
-                        // Implementation for PayPal order creation
-                        console.log('Creating PayPal order...');
-                    },
-                    onApprove: function(data, actions) {
-                        // Implementation for PayPal approval
-                        console.log('PayPal payment approved...');
-                    }
-                }).render('#paypal-button-container');
-            }
-        });
+            document.addEventListener('DOMContentLoaded', function() {
+                if (typeof paypal !== 'undefined') {
+                    paypal.Buttons({
+                        createOrder: function(data, actions) {
+                            // Implementation for PayPal order creation
+                            console.log('Creating PayPal order...');
+                        },
+                        onApprove: function(data, actions) {
+                            // Implementation for PayPal approval
+                            console.log('PayPal payment approved...');
+                        }
+                    }).render('#paypal-button-container');
+                }
+            });
         </script>
-        <?php
+    <?php
         return ob_get_clean();
     }
 
     /**
      * Get Paynow payment form
      */
-    private function get_paynow_payment_form($donation_data) {
+    private function get_paynow_payment_form($donation_data)
+    {
         ob_start();
-        ?>
+    ?>
         <div class="paynow-payment-form gateway-form">
             <div class="payment-method-info">
                 <h5><?php _e('Mobile Money Payment', 'helpme-donations'); ?></h5>
@@ -290,8 +301,8 @@ class HelpMeDonations_Form_Builder {
                 <label for="paynow-phone"><?php _e('Mobile Number', 'helpme-donations'); ?></label>
                 <div class="phone-input-group">
                     <span class="country-code">+263</span>
-                    <input type="tel" id="paynow-phone" name="phone" placeholder="77 123 4567" required 
-                            maxlength="9" class="phone-input">
+                    <input type="tel" id="paynow-phone" name="phone" placeholder="77 123 4567" required
+                        maxlength="9" class="phone-input">
                 </div>
                 <small class="help-text"><?php _e('Enter your mobile number without the country code', 'helpme-donations'); ?></small>
             </div>
@@ -303,6 +314,8 @@ class HelpMeDonations_Form_Builder {
                     </span>
                     <span class="button-spinner" style="display: none;"></span>
                 </button> -->
+
+
             </div>
 
             <div class="security-notice">
@@ -311,37 +324,37 @@ class HelpMeDonations_Form_Builder {
         </div>
 
         <script>
-           
-        document.addEventListener('DOMContentLoaded', function() {
-            document.getElementById('paynow-pay-button').addEventListener('click', function() {
-                const phone = document.getElementById('paynow-phone').value;
-                const method = document.querySelector('input[name="paynow_method"]:checked').value;
-                
-                if (!phone || phone.length !== 9) {
-                    alert('<?php _e("Please enter a valid 9-digit mobile number", "helpme-donations"); ?>');
-                    return;
-                }
-                
-                handlePaynowPayment(method, phone);
-            });
-        });
+            document.addEventListener('DOMContentLoaded', function() {
+                document.getElementById('paynow-pay-button').addEventListener('click', function() {
+                    const phone = document.getElementById('paynow-phone').value;
+                    const method = document.querySelector('input[name="paynow_method"]:checked').value;
 
-        function handlePaynowPayment(method, phone) {
-            alert(method)
-            console.log('Processing Paynow payment...');
-            // Implementation for Paynow payment processing
-        }
+                    if (!phone || phone.length !== 9) {
+                        alert('<?php _e("Please enter a valid 9-digit mobile number", "helpme-donations"); ?>');
+                        return;
+                    }
+
+                    handlePaynowPayment(method, phone);
+                });
+            });
+
+            function handlePaynowPayment(method, phone) {
+                alert(method)
+                console.log('Processing Paynow payment...');
+                // Implementation for Paynow payment processing
+            }
         </script>
-        <?php
+    <?php
         return ob_get_clean();
     }
 
     /**
      * Get InBucks payment form
      */
-    private function get_inbucks_payment_form($donation_data) {
+    private function get_inbucks_payment_form($donation_data)
+    {
         ob_start();
-        ?>
+    ?>
         <div class="inbucks-payment-form gateway-form">
             <div class="payment-method-info">
                 <h5><?php _e('InBucks Mobile Wallet', 'helpme-donations'); ?></h5>
@@ -352,8 +365,8 @@ class HelpMeDonations_Form_Builder {
                 <label for="inbucks-phone"><?php _e('InBucks Phone Number', 'helpme-donations'); ?></label>
                 <div class="phone-input-group">
                     <span class="country-code">+263</span>
-                    <input type="tel" id="inbucks-phone" name="phone" placeholder="77 123 4567" required 
-                           pattern="[0-9]{9}" maxlength="9" class="phone-input">
+                    <input type="tel" id="inbucks-phone" name="phone" placeholder="77 123 4567" required
+                        pattern="[0-9]{9}" maxlength="9" class="phone-input">
                 </div>
                 <small class="help-text"><?php _e('Enter your InBucks registered phone number', 'helpme-donations'); ?></small>
             </div>
@@ -373,32 +386,33 @@ class HelpMeDonations_Form_Builder {
         </div>
 
         <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            document.getElementById('inbucks-pay-button').addEventListener('click', function() {
-                const phone = document.getElementById('inbucks-phone').value;
-                
-                if (!phone || phone.length !== 9) {
-                    alert('<?php _e("Please enter a valid 9-digit mobile number", "helpme-donations"); ?>');
-                    return;
-                }
-                
-                handleInBucksPayment(phone);
-            });
-        });
+            document.addEventListener('DOMContentLoaded', function() {
+                document.getElementById('inbucks-pay-button').addEventListener('click', function() {
+                    const phone = document.getElementById('inbucks-phone').value;
 
-        function handleInBucksPayment(phone) {
-            console.log('Processing InBucks payment...');
-            // Implementation for InBucks payment processing
-        }
+                    if (!phone || phone.length !== 9) {
+                        alert('<?php _e("Please enter a valid 9-digit mobile number", "helpme-donations"); ?>');
+                        return;
+                    }
+
+                    handleInBucksPayment(phone);
+                });
+            });
+
+            function handleInBucksPayment(phone) {
+                console.log('Processing InBucks payment...');
+                // Implementation for InBucks payment processing
+            }
         </script>
-        <?php
+    <?php
         return ob_get_clean();
     }
 
     /**
      * Get ZimSwitch payment form
      */
-    private function get_zimswitch_payment_form($donation_data) {
+    private function get_zimswitch_payment_form($donation_data)
+    {
         $banks = array(
             'cbz' => 'CBZ Bank',
             'stanbic' => 'Stanbic Bank',
@@ -413,7 +427,7 @@ class HelpMeDonations_Form_Builder {
         );
 
         ob_start();
-        ?>
+    ?>
         <div class="zimswitch-payment-form gateway-form">
             <div class="payment-method-info">
                 <h5><?php _e('Bank Card Payment', 'helpme-donations'); ?></h5>
@@ -450,34 +464,35 @@ class HelpMeDonations_Form_Builder {
         </div>
 
         <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            document.getElementById('zimswitch-pay-button').addEventListener('click', function() {
-                const bankCode = document.getElementById('zimswitch-bank').value;
-                
-                if (!bankCode) {
-                    alert('<?php _e("Please select your bank", "helpme-donations"); ?>');
-                    return;
-                }
-                
-                handleZimSwitchPayment(bankCode);
-            });
-        });
+            document.addEventListener('DOMContentLoaded', function() {
+                document.getElementById('zimswitch-pay-button').addEventListener('click', function() {
+                    const bankCode = document.getElementById('zimswitch-bank').value;
 
-        function handleZimSwitchPayment(bankCode) {
-            console.log('Processing ZimSwitch payment...');
-            // Implementation for ZimSwitch payment processing
-        }
+                    if (!bankCode) {
+                        alert('<?php _e("Please select your bank", "helpme-donations"); ?>');
+                        return;
+                    }
+
+                    handleZimSwitchPayment(bankCode);
+                });
+            });
+
+            function handleZimSwitchPayment(bankCode) {
+                console.log('Processing ZimSwitch payment...');
+                // Implementation for ZimSwitch payment processing
+            }
         </script>
-        <?php
+    <?php
         return ob_get_clean();
     }
 
     /**
      * Get default payment form for unknown gateways
      */
-    private function get_default_payment_form($donation_data) {
+    private function get_default_payment_form($donation_data)
+    {
         ob_start();
-        ?>
+    ?>
         <div class="default-payment-form gateway-form">
             <div class="payment-method-info">
                 <h5><?php _e('Payment Processing', 'helpme-donations'); ?></h5>
@@ -495,21 +510,22 @@ class HelpMeDonations_Form_Builder {
         </div>
 
         <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            document.getElementById('default-pay-button').addEventListener('click', function() {
-                console.log('Processing default payment...');
-                // Implementation for default payment processing
+            document.addEventListener('DOMContentLoaded', function() {
+                document.getElementById('default-pay-button').addEventListener('click', function() {
+                    console.log('Processing default payment...');
+                    // Implementation for default payment processing
+                });
             });
-        });
         </script>
-        <?php
+    <?php
         return ob_get_clean();
     }
 
     /**
      * Check if a specific gateway is enabled
      */
-    private function is_gateway_enabled($gateway_id) {
+    private function is_gateway_enabled($gateway_id)
+    {
         $enabled_gateways = get_option('helpme_donations_enabled_gateways', array());
         return in_array($gateway_id, $enabled_gateways);
     }
@@ -517,32 +533,35 @@ class HelpMeDonations_Form_Builder {
     /**
      * Get Stripe publishable key
      */
-    private function get_stripe_publishable_key() {
+    private function get_stripe_publishable_key()
+    {
         if (!$this->is_gateway_enabled('stripe')) {
             return '';
         }
-        
+
         $test_mode = get_option('helpme_donations_test_mode', true);
-        return $test_mode ? 
-            get_option('helpme_donations_stripe_test_publishable_key', '') : 
+        return $test_mode ?
+            get_option('helpme_donations_stripe_test_publishable_key', '') :
             get_option('helpme_donations_stripe_live_publishable_key', '');
     }
 
     /**
      * Get PayPal client ID
      */
-    private function get_paypal_client_id() {
+    private function get_paypal_client_id()
+    {
         if (!$this->is_gateway_enabled('paypal')) {
             return '';
         }
-        
+
         $test_mode = get_option('helpme_donations_test_mode', true);
-        return $test_mode ? 
-            get_option('helpme_donations_paypal_test_client_id', '') : 
+        return $test_mode ?
+            get_option('helpme_donations_paypal_test_client_id', '') :
             get_option('helpme_donations_paypal_live_client_id', '');
     }
 
-    public function render_form($atts) {
+    public function render_form($atts)
+    {
         $atts = shortcode_atts(array(
             'form_id' => 0,
             'campaign_id' => 0,
@@ -562,14 +581,15 @@ class HelpMeDonations_Form_Builder {
         return ob_get_clean();
     }
 
-    private function render_form_html($atts, $amounts) {
+    private function render_form_html($atts, $amounts)
+    {
         $form_id = 'helpme-donation-form-' . wp_rand(1000, 9999);
-        ?>
+    ?>
         <div class="helpme-donations-form-wrapper" id="<?php echo esc_attr($form_id); ?>">
             <?php if (!empty($atts['title'])): ?>
                 <h3 class="form-title"><?php echo esc_html($atts['title']); ?></h3>
             <?php endif; ?>
-            
+
             <?php if (!empty($atts['description'])): ?>
                 <div class="form-description">
                     <?php echo wp_kses_post($atts['description']); ?>
@@ -613,12 +633,12 @@ class HelpMeDonations_Form_Builder {
 
             <form class="helpme-donation-form" data-form-id="<?php echo esc_attr($atts['form_id']); ?>" data-campaign-id="<?php echo esc_attr($atts['campaign_id']); ?>">
                 <?php wp_nonce_field('helpme_donations_nonce', 'helpme_donations_nonce'); ?>
-                
+
                 <!-- Step 1: Amount Selection -->
                 <div class="form-step active" data-step="1">
                     <div class="step-content">
                         <h4 class="step-title"><?php _e('Select Your Donation Amount', 'helpme-donations'); ?></h4>
-                        
+
                         <div class="amount-selection">
                             <div class="amount-buttons">
                                 <?php foreach ($amounts as $amount): ?>
@@ -627,7 +647,7 @@ class HelpMeDonations_Form_Builder {
                                     </button>
                                 <?php endforeach; ?>
                             </div>
-                            
+
                             <div class="custom-amount">
                                 <label for="custom-amount-input"><?php _e('Or enter a custom amount:', 'helpme-donations'); ?></label>
                                 <div class="currency-input">
@@ -635,7 +655,7 @@ class HelpMeDonations_Form_Builder {
                                     <input type="number" id="custom-amount-input" name="custom_amount" placeholder="0.00" min="1" step="0.01">
                                 </div>
                             </div>
-                            
+
                             <input type="hidden" name="amount" id="selected-amount" required>
                             <input type="hidden" name="currency" value="<?php echo esc_attr($atts['currency']); ?>">
                         </div>
@@ -663,7 +683,7 @@ class HelpMeDonations_Form_Builder {
                 <div class="form-step" data-step="2">
                     <div class="step-content">
                         <h4 class="step-title"><?php _e('Your Information', 'helpme-donations'); ?></h4>
-                        
+
                         <div class="donor-options">
                             <label class="donor-option">
                                 <input type="radio" name="donor_type" value="named" checked>
@@ -672,7 +692,7 @@ class HelpMeDonations_Form_Builder {
                                     <span><?php _e('Share my name with this donation', 'helpme-donations'); ?></span>
                                 </div>
                             </label>
-                            
+
                             <label class="donor-option">
                                 <input type="radio" name="donor_type" value="anonymous">
                                 <div class="option-card">
@@ -688,7 +708,7 @@ class HelpMeDonations_Form_Builder {
                                     <label for="donor-name"><?php _e('Full Name', 'helpme-donations'); ?> <span class="required">*</span></label>
                                     <input type="text" id="donor-name" name="donor_name" required>
                                 </div>
-                                
+
                                 <div class="form-group">
                                     <label for="donor-email"><?php _e('Email Address', 'helpme-donations'); ?> <span class="required">*</span></label>
                                     <input type="email" id="donor-email" name="donor_email" required>
@@ -716,7 +736,7 @@ class HelpMeDonations_Form_Builder {
                 <div class="form-step" data-step="3">
                     <div class="step-content">
                         <h4 class="step-title"><?php _e('Choose Payment Method', 'helpme-donations'); ?></h4>
-                        
+
                         <div class="payment-methods">
                             <?php if (!empty($this->available_gateways) && is_array($this->available_gateways)): ?>
                                 <?php foreach ($this->available_gateways as $gateway): ?>
@@ -757,7 +777,7 @@ class HelpMeDonations_Form_Builder {
                 <div class="form-step" data-step="4">
                     <div class="step-content">
                         <h4 class="step-title"><?php _e('Payment Details', 'helpme-donations'); ?></h4>
-                        
+
                         <!-- Gateway-specific payment forms will be loaded here -->
                         <div id="gateway-payment-container">
                             <div class="payment-form-placeholder">
@@ -774,7 +794,7 @@ class HelpMeDonations_Form_Builder {
                 <div class="form-step" data-step="5">
                     <div class="step-content">
                         <h4 class="step-title"><?php _e('Complete Your Payment', 'helpme-donations'); ?></h4>
-                        
+
                         <div class="donation-summary">
                             <h5><?php _e('Donation Summary', 'helpme-donations'); ?></h5>
                             <div class="summary-row">
@@ -808,7 +828,7 @@ class HelpMeDonations_Form_Builder {
                             <div class="success-icon">✅</div>
                             <h4 class="completion-title"><?php _e('Thank You for Your Donation!', 'helpme-donations'); ?></h4>
                             <p class="completion-text"><?php _e('Your generosity makes a real difference. You will receive a confirmation email shortly.', 'helpme-donations'); ?></p>
-                            
+
                             <div class="completion-details">
                                 <div class="detail-row">
                                     <span><?php _e('Transaction ID:', 'helpme-donations'); ?></span>
@@ -841,10 +861,11 @@ class HelpMeDonations_Form_Builder {
                 <div class="form-messages"></div>
             </form>
         </div>
-        <?php
+<?php
     }
 
-    private function format_currency($amount, $currency) {
+    private function format_currency($amount, $currency)
+    {
         $symbols = array(
             'USD' => '$',
             'ZIG' => 'ZiG',
@@ -857,7 +878,8 @@ class HelpMeDonations_Form_Builder {
         return $symbol . number_format($amount, 0);
     }
 
-    private function get_currency_symbol($currency) {
+    private function get_currency_symbol($currency)
+    {
         $symbols = array(
             'USD' => '$',
             'ZIG' => 'ZiG',
@@ -869,7 +891,8 @@ class HelpMeDonations_Form_Builder {
         return isset($symbols[$currency]) ? $symbols[$currency] : $currency;
     }
 
-    private function get_currency_symbols() {
+    private function get_currency_symbols()
+    {
         return array(
             'USD' => '$',
             'ZIG' => 'ZiG',

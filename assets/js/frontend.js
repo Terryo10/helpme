@@ -439,11 +439,11 @@
             this.form.prepend(messageElement);
 
             // Auto-remove after delay (except for errors)
-            if (type !== 'error') {
-                setTimeout(() => {
-                    messageElement.fadeOut(() => messageElement.remove());
-                }, 5000);
-            }
+            // if (type !== 'error') {
+            //     setTimeout(() => {
+            //         messageElement.fadeOut(() => messageElement.remove());
+            //     }, 5000);
+            // }
         }
 
         formatCurrency(amount, currency) {

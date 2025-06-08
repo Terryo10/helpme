@@ -479,7 +479,7 @@ jQuery(document).ready(function ($) {
     const paymentContainer = form.find(".payment-form-container");
     paymentContainer.html(`
             <div style="text-align: center; padding: 40px;">
-                <div class="loading-spinner"></div>
+                <div class="loading-spinner">Gene Piki</div>
                 <p style="margin-top: 20px; color: #666;">${helpmeDonations.i18n.processing}</p>
             </div>
         `);
@@ -577,7 +577,7 @@ jQuery(document).ready(function ($) {
     formData.phone = phone;
     formData.method = method;
 
-    alert(formData.amount);
+    // alert(formData.amount);
 
     processGenericPayment("paynow", formData);
   }
@@ -621,15 +621,21 @@ jQuery(document).ready(function ($) {
           } else {
             paymentCompleted(response.data);
           }
-        } else if(response.data.poll_url){
+        } else if (response.data?.poll_url) {
+          alert(response?.data?.poll_url)
+
           showMessage(
             response.data.message || "Payment processing failed",
-            "error"
+
+            "error",
+            response?.data?.poll_url
           );
-        }else{
+        } else {
+          alert(response?.data?.poll_url)
           showMessage(
             response.data.message || "Payment processing failed",
-            "error"
+            "error",
+            response?.data?.poll_url
           );
         }
       },
@@ -695,13 +701,12 @@ jQuery(document).ready(function ($) {
   function showMessage(message, type, poll_url) {
     let repayButton = ``;
 
-    if(poll_url){
-      repayButton = `<button class="btn btn-success" data-type="${type}">Recheck Your payment details</button> `;
+    if (poll_url) {
+      repayButton += `<button class="btn btn-success" data-type="${type}">Recheck Your payment details</button> `;
     }
     messagesContainer.html(
       `<div class="form-message ${type}">${message} ${repayButton}</div>`
     );
-
   }
 
   function shareDonation() {
