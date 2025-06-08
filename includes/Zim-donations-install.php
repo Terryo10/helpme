@@ -120,7 +120,7 @@ class HelpMeDonations_Install
         $donations_table = $wpdb->prefix . 'helpme_donations';
 
         $donations_sql = "CREATE TABLE $donations_table (
-           id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
             donation_id varchar(50) DEFAULT NULL,
             campaign_id bigint(20) unsigned DEFAULT NULL,
             form_id bigint(20) unsigned DEFAULT NULL,

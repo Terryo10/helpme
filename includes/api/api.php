@@ -1,4 +1,6 @@
 <?php
+require_once HELPME_DONATIONS_PLUGIN_DIR . 'includes/api/paynow/autoloader.php';
+
 
 function helpme_submit_paynow_donation()
 {
