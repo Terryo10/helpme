@@ -72,6 +72,7 @@ function helpme_submit_paynow_donation()
             'created_at'         => current_time('mysql')
         ]);
 
+        $transaction_id = $wpdb->insert_id;
 
         if ($method === 'paynow' || $method === 'ecocash') {
             $return_url = add_query_arg('donation', $donation_id, get_permalink(get_option('helpme_donations_success_page')));
@@ -100,7 +101,7 @@ function helpme_submit_paynow_donation()
                 $wpdb->update(
                     $donations_table,
                     ['poll_url' =>  $pollUrl],
-                    ['id' => $wpdb->insert_id]
+                    ['id' => $transaction_id]
                 );
                 $status = $paynow->pollTransaction($pollUrl);
 
@@ -110,18 +111,18 @@ function helpme_submit_paynow_donation()
                     $wpdb->update(
                         $donations_table,
                         ['status' =>  'paid'],
-                        ['id' => $wpdb->insert_id]
+                        ['id' => $transaction_id]
                     );
-                    wp_send_json_success(['message' => "Payment successful", 'poll_url' => $pollUrl]);
+                    wp_send_json_success(['message' => "Payment successful", 'poll_url' => $pollUrl, 'transaction_id' => $transaction_id]);
                 } else {
 
                     // Now update poll_url for that donation
                     $wpdb->update(
                         $donations_table,
                         ['status' =>  'cancelled'],
-                        ['id' => $wpdb->insert_id]
+                        ['id' => $transaction_id]
                     );
-                    wp_send_json_error(['message' => "Payment was not successful", 'poll_url' => $pollUrl]);
+                    wp_send_json_error(['message' => "Payment was not successful", 'poll_url' => $pollUrl, 'transaction_id' => $transaction_id]);
                 }
             } else {
                 wp_send_json_error([
