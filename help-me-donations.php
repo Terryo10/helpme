@@ -101,6 +101,8 @@ final class HelpMeDonations
      */
     private function load_dependencies()
     {
+        require_once HELPME_DONATIONS_PLUGIN_DIR . 'includes/api/paynow/autoloader.php';
+
         // Core classes
         require_once HELPME_DONATIONS_PLUGIN_DIR . 'includes/class-zim-donations-install.php';
         require_once HELPME_DONATIONS_PLUGIN_DIR . 'includes/class-zim-donations-db.php';

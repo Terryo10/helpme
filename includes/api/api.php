@@ -1,6 +1,4 @@
 <?php
-require_once HELPME_DONATIONS_PLUGIN_DIR . 'includes/api/paynow/autoloader.php';
-
 
 function helpme_submit_paynow_donation()
 {
@@ -199,7 +197,7 @@ function check_paynow_payment_status()
                 'donation_id' => $donation_id
             ]);
 
-            wp_send_json_success(['message' => "Payment successful", 'donation_id' => $donation_id]);
+            wp_send_json_success(['message' => "Paid", 'donation_id' => $donation_id]);
         } else {
             $wpdb->update($donations_table, [
                 'status'     => 'failed',
@@ -208,7 +206,7 @@ function check_paynow_payment_status()
                 'donation_id' => $donation_id
             ]);
 
-            wp_send_json_error(['message' => "Payment was not successful", 'donation_id' => $donation_id]);
+            wp_send_json_error(['message' => "Payment was cancelled", 'donation_id' => $donation_id]);
         }
     } catch (Exception $error) {
         wp_send_json_error(['message' => $error->getMessage() ?? 'Payment polling failed.']);
