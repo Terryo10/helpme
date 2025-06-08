@@ -621,7 +621,12 @@ jQuery(document).ready(function ($) {
           } else {
             paymentCompleted(response.data);
           }
-        } else {
+        } else if(response.data.poll_url){
+          showMessage(
+            response.data.message || "Payment processing failed",
+            "error"
+          );
+        }else{
           showMessage(
             response.data.message || "Payment processing failed",
             "error"
@@ -687,13 +692,16 @@ jQuery(document).ready(function ($) {
     return emailRegex.test(email);
   }
 
-  function showMessage(message, type) {
+  function showMessage(message, type, poll_url) {
+    let repayButton = ``;
+
+    if(poll_url){
+      repayButton = `<button class="btn btn-success" data-type="${type}">Recheck Your payment details</button> `;
+    }
     messagesContainer.html(
-      `<div class="form-message ${type}">${message}</div>`
+      `<div class="form-message ${type}">${message} ${repayButton}</div>`
     );
-    setTimeout(() => {
-      messagesContainer.empty();
-    }, 5000);
+
   }
 
   function shareDonation() {
