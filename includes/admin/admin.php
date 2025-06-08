@@ -985,6 +985,7 @@ class HelpMeDonations_Admin
         $stripe_enabled = get_option('helpme_donations_stripe_enabled', 0);
         $paypal_enabled = get_option('helpme_donations_paypal_enabled', 0);
         $paynow_enabled = get_option('helpme_donations_paynow_enabled', 0);
+        $enabled_gateways = get_option('helpme_donations_enabled_gateways', array());
 
         $missing_configs = array();
 
@@ -1017,7 +1018,7 @@ class HelpMeDonations_Admin
         }
 
         // Check if no gateways are enabled
-        if (!$stripe_enabled && !$paypal_enabled && !$paynow_enabled) {
+        if (!empty($enabled_gateways) && is_array($enabled_gateways)) {
         ?>
             <div class="notice notice-info">
                 <p>

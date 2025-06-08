@@ -129,7 +129,7 @@ class HelpMeDonations_Install
             amount decimal(15,2) DEFAULT NULL,
             currency varchar(3) DEFAULT NULL,
             gateway varchar(50) DEFAULT NULL,
-            poll_url text DEFAULT NULL,
+            poll_url LONGTEXT DEFAULT NULL,
             gateway_transaction_id varchar(100) DEFAULT NULL,
             status varchar(20) DEFAULT NULL,
             is_recurring tinyint(1) DEFAULT NULL,
