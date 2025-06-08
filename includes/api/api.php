@@ -183,6 +183,62 @@ function helpme_submit_paynow_donation()
     }
 }
 
+function check_paynow_payment_status()
+{
+    global $wpdb;
+
+    $poll_url = sanitize_text_field($_POST['poll_url'] ?? '');
+
+    if (empty($poll_url)) {
+        wp_send_json_error(['message' => 'Missing poll_url.']);
+        return;
+    }
+
+    // Step 1: Find the donation by poll_url
+    $donations_table = $wpdb->prefix . 'helpme_donations';
+    $donation_id = $wpdb->get_var($wpdb->prepare(
+        "SELECT donation_id FROM $donations_table WHERE poll_url = %s",
+        $poll_url
+    ));
+
+    if (!$donation_id) {
+        wp_send_json_error(['message' => 'Donation not found for this poll_url.']);
+        return;
+    }
+
+    try {
+        // Step 2: Recreate the Paynow instance
+        $paynow = initiatingPayment($donation_id);
+
+        // Step 3: Poll status from Paynow
+        $status = $paynow->pollTransaction($poll_url);
+
+        if ($status->paid()) {
+            // Step 4: Update donation status in DB
+            $wpdb->update($donations_table, [
+                'status'     => 'completed',
+                'updated_at' => current_time('mysql')
+            ], [
+                'donation_id' => $donation_id
+            ]);
+
+            wp_send_json_success(['message' => "Payment successful", 'donation_id' => $donation_id]);
+        } else {
+            $wpdb->update($donations_table, [
+                'status'     => 'failed',
+                'updated_at' => current_time('mysql')
+            ], [
+                'donation_id' => $donation_id
+            ]);
+
+            wp_send_json_error(['message' => "Payment was not successful", 'donation_id' => $donation_id]);
+        }
+    } catch (Exception $error) {
+        wp_send_json_error(['message' => $error->getMessage() ?? 'Payment polling failed.']);
+    }
+}
+
+
 function initiatingPayment($id)
 {
     // Paynow Setup

@@ -698,11 +698,44 @@ jQuery(document).ready(function ($) {
     let repayButton = ``;
 
     if (poll_url) {
-      repayButton += `<button class="btn btn-success" data-type="${type}">Recheck Your payment details</button> `;
+      repayButton += `<button data-pollurl="${poll_url}" class="btn btn-success check-paynow-status gateway-pay-button" data-type="${type}">Recheck Your payment details</button> `;
     }
     messagesContainer.html(
       `<div class="form-message ${type}">${message} ${repayButton}</div>`
     );
+
+    $(document).on("click", ".check-paynow-status", function () {
+      const pollUrl = $(this).data("pollurl");
+
+      if (!pollUrl) return;
+
+      $.ajax({
+        url: helpmeDonations.ajaxurl,
+        type: "POST",
+        data: {
+          action: "check_paynow_payment_status",
+          poll_url: pollUrl,
+          nonce: helpmeDonations.nonce,
+        },
+        success: function (response) {
+          if (response.success) {
+            paymentCompleted(response.data);
+          } else {
+            showMessage(
+              response.data.message || "Payment not completed",
+              "error",
+              pollUrl
+            );
+          }
+        },
+        error: function () {
+          showMessage(
+            "An error occurred while checking payment status",
+            "error"
+          );
+        },
+      });
+    });
   }
 
   function shareDonation() {
