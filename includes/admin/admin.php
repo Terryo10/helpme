@@ -1018,7 +1018,7 @@ class HelpMeDonations_Admin
         }
 
         // Check if no gateways are enabled
-        if (!empty($enabled_gateways) && is_array($enabled_gateways)) {
+        if (empty($enabled_gateways) && !is_array($enabled_gateways)) {
         ?>
             <div class="notice notice-info">
                 <p>
