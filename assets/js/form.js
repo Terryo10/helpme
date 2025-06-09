@@ -787,7 +787,6 @@ jQuery(document).ready(function ($) {
   }
 
   function addFormLoader() {
-    alert("add");
     const paymentContainer = form.find(".payment-form-container");
     paymentContainer.html(`
             <div style="text-align: center; padding: 40px;">
@@ -797,7 +796,6 @@ jQuery(document).ready(function ($) {
         `);
   }
   function removeFormLoader() {
-    alert("remove");
     const paymentContainer = form.find(".payment-form-container");
     paymentContainer.html("");
   }
