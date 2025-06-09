@@ -604,6 +604,8 @@ jQuery(document).ready(function ($) {
   }
 
   function processGenericPayment(gateway, formData) {
+    addFormLoader();
+
     $.ajax({
       url: helpmeDonations.ajaxurl,
       type: "POST",
@@ -614,6 +616,7 @@ jQuery(document).ready(function ($) {
         ...formData,
       },
       success: function (response) {
+        removeFormLoader();
         if (response.success) {
           if (response.data.redirect_url) {
             // Redirect to payment page
@@ -636,6 +639,7 @@ jQuery(document).ready(function ($) {
         }
       },
       error: function () {
+        removeFormLoader();
         showMessage("An error occurred while processing your payment", "error");
       },
     });
@@ -705,6 +709,8 @@ jQuery(document).ready(function ($) {
     );
 
     $(document).on("click", ".check-paynow-status", function () {
+      addFormLoader();
+
       const pollUrl = $(this).data("pollurl");
 
       if (!pollUrl) return;
@@ -718,6 +724,7 @@ jQuery(document).ready(function ($) {
           nonce: helpmeDonations.nonce,
         },
         success: function (response) {
+          removeFormLoader();
           if (response.success) {
             paymentCompleted(response.data);
           } else {
@@ -729,6 +736,7 @@ jQuery(document).ready(function ($) {
           }
         },
         error: function () {
+          removeFormLoader();
           showMessage(
             "An error occurred while checking payment status",
             "error"
@@ -776,6 +784,22 @@ jQuery(document).ready(function ($) {
     updateStepDisplay();
     updateNavigationButtons();
     messagesContainer.empty();
+  }
+
+  function addFormLoader() {
+    alert("add");
+    const paymentContainer = form.find(".payment-form-container");
+    paymentContainer.html(`
+            <div style="text-align: center; padding: 40px;">
+                <div class="loading-spinner"></div>
+                <p style="margin-top: 20px; color: #666;">${helpmeDonations.i18n.processing}</p>
+            </div>
+        `);
+  }
+  function removeFormLoader() {
+    alert("remove");
+    const paymentContainer = form.find(".payment-form-container");
+    paymentContainer.html("");
   }
 
   // Keyboard navigation

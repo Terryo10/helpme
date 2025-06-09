@@ -848,6 +848,8 @@ class HelpMeDonations_Form_Builder
                     </div>
                 </div>
 
+                <div class="form-messages"></div>
+
                 <!-- Navigation Buttons -->
                 <div class="form-navigation">
                     <button type="button" class="nav-button prev-button" style="display: none;">
@@ -858,7 +860,6 @@ class HelpMeDonations_Form_Builder
                     </button>
                 </div>
 
-                <div class="form-messages"></div>
             </form>
         </div>
 <?php
