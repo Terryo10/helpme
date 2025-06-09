@@ -69,6 +69,7 @@ class HelpMeDonations_Form_Builder
             'nonce' => wp_create_nonce('helpme_donations_nonce'),
             'currency_symbols' => $this->get_currency_symbols(),
             'stripe_publishable_key' => $this->get_stripe_publishable_key(),
+            'stripe_secret_key' => $this->get_stripe_secret_key(),
             'i18n' => array(
                 'continue' => __('Continue →', 'helpme-donations'),
                 'choose_payment' => __('Choose Payment →', 'helpme-donations'),
@@ -164,18 +165,22 @@ class HelpMeDonations_Form_Builder
             </div>
 
             <div class="payment-actions">
-                <button type="button" id="stripe-pay-button" class="gateway-pay-button">
+                <!-- <button type="button" id="stripe-pay-button" class="gateway-pay-button">
                     <span class="button-text">
                         <?php printf(__('Pay %s', 'helpme-donations'), $this->format_currency($donation_data['amount'], $donation_data['currency'])); ?>
                     </span>
                     <span class="button-spinner" style="display: none;"></span>
-                </button>
+                </button> -->
             </div>
 
             <div class="security-notice">
                 <small><?php _e('Secured by Stripe. Your card information is encrypted and secure.', 'helpme-donations'); ?></small>
             </div>
         </div>
+
+        <script>
+            window.stripe_publishable_key = "<?php echo esc_attr(get_option('helpme_donations_stripe_live_publishable_key')) ?>";
+        </script>
 
         <script>
             document.addEventListener('DOMContentLoaded', function() {
@@ -245,6 +250,7 @@ class HelpMeDonations_Form_Builder
         </div>
 
         <script src="https://www.paypal.com/sdk/js?client-id=<?php echo esc_attr($this->get_paypal_client_id()); ?>&currency=<?php echo esc_attr($donation_data['currency']); ?>"></script>
+
         <script>
             document.addEventListener('DOMContentLoaded', function() {
                 if (typeof paypal !== 'undefined') {
@@ -543,6 +549,17 @@ class HelpMeDonations_Form_Builder
         return $test_mode ?
             get_option('helpme_donations_stripe_test_publishable_key', '') :
             get_option('helpme_donations_stripe_live_publishable_key', '');
+    }
+    private function get_stripe_secret_key()
+    {
+        if (!$this->is_gateway_enabled('stripe')) {
+            return '';
+        }
+
+        $test_mode = get_option('helpme_donations_test_mode', true);
+        return $test_mode ?
+            get_option('helpme_donations_stripe_test_secret_key', '') :
+            get_option('helpme_donations_stripe_live_secret_key', '');
     }
 
     /**

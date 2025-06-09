@@ -313,6 +313,14 @@ final class HelpMeDonations
             HELPME_DONATIONS_VERSION
         );
 
+        wp_enqueue_script(
+            'stripe-js', // Handle
+            'https://js.stripe.com/v3/', // Source
+            array(), // No dependencies
+            null, // No version (Stripe recommends not using a version number)
+            true // Load in footer
+        );
+
         // JavaScript
         wp_enqueue_script(
             'helpme-donations-frontend',

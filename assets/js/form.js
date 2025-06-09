@@ -506,7 +506,12 @@ jQuery(document).ready(function ($) {
     }
   }
 
+  $("#stripe-pay-button").click((e) => {
+    alert("dgd");
+  });
+
   function processStripePayment() {
+    addFormLoader();
     if (!window.stripeInstance) {
       showMessage("Stripe not properly initialized", "error");
       return;
@@ -520,25 +525,29 @@ jQuery(document).ready(function ($) {
       url: helpmeDonations.ajaxurl,
       type: "POST",
       data: {
-        action: "helpme_process_donation",
+        action: "helpme_submit_paynow_donation",
         nonce: helpmeDonations.nonce,
         gateway: "stripe",
         ...formData,
       },
       success: function (response) {
-        if (response.success && response.data.client_secret) {
+        removeFormLoader();
+
+        if (response.success) {
           // Confirm payment with Stripe
           stripe
-            .confirmCardPayment(response.data.client_secret, {
+            .confirmCardPayment(helpmeDonations.stripe_secret_key, {
               payment_method: {
                 card: cardElement,
                 billing_details: {
-                  name: formData.donor_name,
-                  email: formData.donor_email,
+                  name: formData.donor_name ?? "Donor",
+                  email: formData.donor_email ?? "pikigene01@gmail.com",
                 },
               },
             })
             .then(function (result) {
+              removeFormLoader();
+
               if (result.error) {
                 showMessage(result.error.message, "error");
               } else {
@@ -546,6 +555,8 @@ jQuery(document).ready(function ($) {
               }
             });
         } else {
+          removeFormLoader();
+
           showMessage(
             response.data.message || "Payment processing failed",
             "error"
@@ -553,6 +564,8 @@ jQuery(document).ready(function ($) {
         }
       },
       error: function () {
+        removeFormLoader();
+
         showMessage("An error occurred while processing your payment", "error");
       },
     });
