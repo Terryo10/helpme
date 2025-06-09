@@ -121,6 +121,7 @@ final class HelpMeDonations
         require_once HELPME_DONATIONS_PLUGIN_DIR . 'includes/gateways/class-zimswitch.php';
         require_once HELPME_DONATIONS_PLUGIN_DIR . 'includes/api/api.php';
         require_once HELPME_DONATIONS_PLUGIN_DIR . 'includes/api/paynow_helper.php';
+        require_once HELPME_DONATIONS_PLUGIN_DIR . 'includes/api/stripe-php-master/init.php';
     }
 
     /**
