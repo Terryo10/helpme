@@ -129,30 +129,21 @@ function helpme_submit_paynow_donation()
                 ]);
             }
         } elseif ($method === "stripe") {
-            // \Stripe\Stripe::setApiKey(get_option('helpme_donations_stripe_live_publishable_key'));
+            \Stripe\Stripe::setApiKey(get_option('helpme_donations_stripe_live_publishable_key'));
 
             // header('Content-Type: application/json');
 
             try {
-            //     $checkout_session = \Stripe\Checkout\Session::create([
-            //         'payment_method_types' => ['card'],
-            //         'line_items' => [[
-            //             'price_data' => [
-            //                 'currency' => 'usd',
-            //                 'unit_amount' => $amount * 100, // $50.00
-            //                 'product_data' => [
-            //                     'name' => 'Donations',
-            //                 ],
-            //             ],
-            //             'quantity' => 1,
-            //         ]],
-            //         'mode' => 'payment',
-            //         'success_url' => get_donation_success_url(),
-            //         'cancel_url' => get_donation_error_url(),
-            //     ]);
+                $amount = $amount * 100; // Amount in cents (e.g. $50.00)
+                $currency = 'usd';
+
+                $payment_intent = \Stripe\PaymentIntent::create([
+                    'amount' => $amount,
+                    'currency' => $currency,
+                ]);
 
                 // wp_send_json_success(['message' => "Payment successful", 'transaction_id' => $checkout_session->id]);
-                wp_send_json_success(['message' => "Payment successful"]);
+                wp_send_json_success(['message' => "Payment successful", 'client_secret' => $payment_intent->client_secret, 'transaction_id' => $transaction_id]);
             } catch (Exception $e) {
                 wp_send_json_error(['message' => $e->getMessage() ?? 'Payment initiation failed.']);
             }

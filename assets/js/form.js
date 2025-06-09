@@ -536,7 +536,7 @@ jQuery(document).ready(function ($) {
         if (response.success) {
           // Confirm payment with Stripe
           stripe
-            .confirmCardPayment(helpmeDonations.stripe_secret_key, {
+            .confirmCardPayment(response.data?.client_secret, {
               payment_method: {
                 card: cardElement,
                 billing_details: {
