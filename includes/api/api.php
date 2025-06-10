@@ -151,6 +151,8 @@ function helpme_submit_paynow_donation()
                 wp_send_json_error(['message' => $e->getMessage() ?? 'Payment initiation failed.']);
             }
             wp_send_json_error(['message' => 'Another payment method coming soon...']);
+        } elseif ($method === "paypal") {
+            wp_send_json_success(['message' => "Data Saved For PayPal User successful you can now proceed to checkout", 'transaction_id' => $transaction_id]);
         }
 
 
@@ -235,6 +237,7 @@ function check_paynow_payment_status()
 }
 function update_donation_success_payment_status()
 {
+
     global $wpdb;
 
     $transaction_id = sanitize_text_field($_POST['transaction_id'] ?? '');
@@ -252,7 +255,7 @@ function update_donation_success_payment_status()
     ));
 
     if (!$donation_id) {
-        wp_send_json_error(['message' => 'Donation not found for this poll_url.']);
+        wp_send_json_error(['message' => 'Donation not found for this transaction id.']);
         return;
     }
 
@@ -263,10 +266,10 @@ function update_donation_success_payment_status()
             'status'     => 'Paid',
             'updated_at' => current_time('mysql')
         ], [
-            'id' => $donation_id
+            'id' => $transaction_id
         ]);
 
-        wp_send_json_success(['message' => "Paid", 'donation_id' => $donation_id]);
+        wp_send_json_success(['message' => "Paid", 'transaction_id' => $transaction_id]);
     } catch (Exception $error) {
         wp_send_json_error(['message' => $error->getMessage() ?? 'Payment polling failed.']);
     }

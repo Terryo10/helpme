@@ -1,4 +1,5 @@
 jQuery(document).ready(function ($) {
+  alert("js loaded");
   const form = $(".helpme-donation-form");
   const stepIndicators = form.parent().find(".step");
   const formSteps = form.find(".form-step");
@@ -19,6 +20,7 @@ jQuery(document).ready(function ($) {
   const anonymousInput = form.find('input[name="anonymous"]');
   const donorDetails = form.find(".donor-details");
   const paymentMethodRadios = form.find('input[name="payment_gateway"]');
+  const payPalPayButton = form.find("#paypal-pay-button-one");
 
   // Initialize form
   initializeForm();
@@ -506,10 +508,6 @@ jQuery(document).ready(function ($) {
     }
   }
 
-  $("#stripe-pay-button").click((e) => {
-    alert("dgd");
-  });
-
   function processStripePayment() {
     addFormLoader();
     if (!window.stripeInstance) {
@@ -551,9 +549,7 @@ jQuery(document).ready(function ($) {
               if (result.error) {
                 showMessage(result.error.message, "error");
               } else {
-                alert(response.data?.transaction_id);
                 updateAllDonationsPaymentStatus(response.data?.transaction_id);
-                paymentCompleted(response.data?.transaction_id);
               }
             });
         } else {
@@ -575,6 +571,39 @@ jQuery(document).ready(function ($) {
 
   function processPayPalPayment() {
     // PayPal processing is handled by PayPal buttons
+
+    addFormLoader();
+
+    $.ajax({
+      url: helpmeDonations.ajaxurl,
+      type: "POST",
+      data: {
+        action: "ajax_create_order",
+        nonce: helpmeDonations.nonce,
+        gateway: "paypal",
+        ...formData,
+      },
+      success: function (response) {
+        removeFormLoader();
+        if (response.success) {
+          if (response.data.redirect_url) {
+            // Redirect to payment page
+            window.location.href = response.data.redirect_url;
+          } else {
+            paymentCompleted(response.data);
+          }
+        } else {
+          showMessage(
+            response.data.message || "Payment processing failed",
+            "error"
+          );
+        }
+      },
+      error: function () {
+        removeFormLoader();
+        showMessage("An error occurred while processing your payment", "error");
+      },
+    });
     showMessage(
       "Please use the PayPal button above to complete your payment",
       "info"
@@ -596,6 +625,11 @@ jQuery(document).ready(function ($) {
 
     processGenericPayment("paynow", formData);
   }
+
+  payPalPayButton.on("click", function () {
+    // processGenericPayment("paypal", formData);
+    alert("paypal");
+  });
 
   function processInBucksPayment() {
     const phone = $("#inbucks-phone").val();
@@ -658,26 +692,6 @@ jQuery(document).ready(function ($) {
         showMessage("An error occurred while processing your payment", "error");
       },
     });
-  }
-
-  function paymentCompleted(paymentData) {
-    // Update completion details
-    form.find(".transaction-id").text(paymentData.transaction_id || "N/A");
-    form
-      .find(".final-amount")
-      .text(
-        formatCurrency(
-          selectedAmountInput.val(),
-          form.find('input[name="currency"]').val()
-        )
-      );
-
-    // Move to completion step
-    currentStep = 6;
-    updateStepDisplay();
-    updateNavigationButtons();
-
-    showMessage(helpmeDonations.i18n.success, "success");
   }
 
   function getFormData() {
@@ -826,6 +840,7 @@ jQuery(document).ready(function ($) {
       },
       success: function (response) {
         if (response.success) {
+          paymentCompleted({ transaction_id });
         } else {
           showMessage(
             response.data.message || "Payment processing failed",
@@ -833,8 +848,30 @@ jQuery(document).ready(function ($) {
           );
         }
       },
-      error: function () {},
+      error: function () {
+        showMessage("Updating Payment Status Failed", "error");
+      },
     });
+  }
+
+  function paymentCompleted(paymentData) {
+    // Update completion details
+    form.find(".transaction-id").text(paymentData.transaction_id || "N/A");
+    form
+      .find(".final-amount")
+      .text(
+        formatCurrency(
+          selectedAmountInput.val(),
+          form.find('input[name="currency"]').val()
+        )
+      );
+
+    // Move to completion step
+    currentStep = 6;
+    updateStepDisplay();
+    updateNavigationButtons();
+
+    showMessage(helpmeDonations.i18n.success, "success");
   }
 
   // Keyboard navigation

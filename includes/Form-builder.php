@@ -241,7 +241,17 @@ class HelpMeDonations_Form_Builder
             </div>
 
             <div class="paypal-container">
-                <div id="paypal-button-container"></div>
+                <div class="payment-actions">
+                    <button type="button" id="paypal-pay-button-one" class="gateway-pay-button">
+                        <span class="button-text">
+                            <?php printf(__('Proceed to confirmation page for %s', 'helpme-donations'), $this->format_currency($donation_data['amount'], $donation_data['currency'])); ?>
+                        </span>
+                        <span class="button-spinner" style="display: none;"></span>
+                    </button>
+                </div>
+                <div id="paypal-button-container">
+
+                </div>
             </div>
 
             <div class="security-notice">
@@ -249,9 +259,9 @@ class HelpMeDonations_Form_Builder
             </div>
         </div>
 
-        <script src="https://www.paypal.com/sdk/js?client-id=<?php echo esc_attr($this->get_paypal_client_id()); ?>&currency=<?php echo esc_attr($donation_data['currency']); ?>"></script>
+        <!-- <script src="https://www.paypal.com/sdk/js?client-id=<?php echo esc_attr($this->get_paypal_client_id()); ?>&currency=<?php echo esc_attr($donation_data['currency']); ?>"></script> -->
 
-        <script>
+        <!-- <script>
             document.addEventListener('DOMContentLoaded', function() {
                 if (typeof paypal !== 'undefined') {
                     paypal.Buttons({
@@ -266,7 +276,7 @@ class HelpMeDonations_Form_Builder
                     }).render('#paypal-button-container');
                 }
             });
-        </script>
+        </script> -->
     <?php
         return ob_get_clean();
     }

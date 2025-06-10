@@ -183,6 +183,8 @@ final class HelpMeDonations
         // Handle donation processing
         add_action('wp_ajax_process_donation', array($this, 'process_donation'));
         add_action('wp_ajax_nopriv_process_donation', array($this, 'process_donation'));
+        add_action('wp_ajax_update_donation_success_payment_status', 'update_donation_success_payment_status');
+
         add_action('wp_ajax_helpme_submit_paynow_donation', 'helpme_submit_paynow_donation');
         add_action('wp_ajax_check_paynow_payment_status', 'check_paynow_payment_status');
         add_action('wp_ajax_nopriv_helpme_submit_paynow_donation', 'helpme_submit_paynow_donation');

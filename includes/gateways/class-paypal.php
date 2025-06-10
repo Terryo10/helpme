@@ -134,8 +134,8 @@ class ZimDonations_Gateway_PayPal {
             'amount' => floatval($_POST['amount']),
             'currency' => sanitize_text_field($_POST['currency']),
             'donation_id' => sanitize_text_field($_POST['donation_id']),
-            'donor_name' => sanitize_text_field($_POST['donor_name']),
-            'donor_email' => sanitize_email($_POST['donor_email'])
+            'donor_name' => sanitize_text_field($_POST['donor_name']) ?? 'Unknown',
+            'donor_email' => sanitize_email($_POST['donor_email']) ?? 'pikigene01@gmail.com'
         );
 
         $result = $this->process_payment($donation_data);
