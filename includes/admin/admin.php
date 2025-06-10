@@ -369,6 +369,7 @@ class HelpMeDonations_Admin
                 <th>' . __('Donation ID', 'helpme-donations') . '</th>
                 <th>' . __('Donor', 'helpme-donations') . '</th>
                 <th>' . __('Amount', 'helpme-donations') . '</th>
+                <th>' . __('Gateway', 'helpme-donations') . '</th>
                 <th>' . __('Status', 'helpme-donations') . '</th>
                 <th>' . __('Date', 'helpme-donations') . '</th>
                 <th>' . __('Actions', 'helpme-donations') . '</th>
@@ -383,6 +384,7 @@ class HelpMeDonations_Admin
                 echo '<td>' . esc_html($row->donation_id) . '</td>';
                 echo '<td>' . esc_html($row->donor_name ?: $row->donor_email) . '</td>';
                 echo '<td>' . esc_html(number_format($row->amount, 2)) . '</td>';
+                echo '<td>' . esc_html($row->gateway) . '</td>';
                 echo '<td>' . esc_html(ucfirst($row->status)) . '</td>';
                 echo '<td>' . esc_html(date('Y-m-d H:i', strtotime($row->created_at))) . '</td>';
                 echo '<td>

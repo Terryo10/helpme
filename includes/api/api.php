@@ -59,7 +59,7 @@ function helpme_submit_paynow_donation()
             'donor_id'           => $donor_id,
             'amount'             => $amount,
             'currency'           => $currency,
-            'gateway'            => 'paynow',
+            'gateway'            => $method,
             'status'             => 'pending',
             'is_recurring'       => $is_recurring,
             'recurring_interval' => $recurring_interval,
@@ -152,7 +152,7 @@ function helpme_submit_paynow_donation()
             }
             wp_send_json_error(['message' => 'Another payment method coming soon...']);
         } elseif ($method === "paypal") {
-            wp_send_json_success(['message' => "Data Saved For PayPal User successful you can now proceed to checkout", 'transaction_id' => $transaction_id]);
+            wp_send_json_success(['message' => "Data Saved For PayPal User successful you can now proceed to checkout", 'transaction_id' => $transaction_id, 'method' => 'paypal']);
         }
 
 

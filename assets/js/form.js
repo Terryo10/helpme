@@ -571,7 +571,7 @@ jQuery(document).ready(function ($) {
 
   function processPayPalPayment() {
     // PayPal processing is handled by PayPal buttons
-
+    let formData = getFormData();
     addFormLoader();
 
     $.ajax({
@@ -626,9 +626,9 @@ jQuery(document).ready(function ($) {
     processGenericPayment("paynow", formData);
   }
 
-  payPalPayButton.on("click", function () {
-    // processGenericPayment("paypal", formData);
-    alert("paypal");
+  $(document).on("click", "#paypal-pay-button-one", function () {
+    let formData = getFormData();
+    processGenericPayment("paypal", formData);
   });
 
   function processInBucksPayment() {
@@ -670,6 +670,14 @@ jQuery(document).ready(function ($) {
           if (response.data.redirect_url) {
             // Redirect to payment page
             window.location.href = response.data.redirect_url;
+          } else if (response.data?.method === "paypal") {
+            showMessage(
+              response.data?.message || "",
+
+              "error"
+            );
+            nextButton.click();
+            //navigate to next page
           } else {
             paymentCompleted(response.data);
           }
