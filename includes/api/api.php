@@ -1,4 +1,5 @@
 <?php
+require_once HELPME_DONATIONS_PLUGIN_DIR . 'includes/api/app_keys.php';
 
 function helpme_submit_paynow_donation()
 {
@@ -129,7 +130,9 @@ function helpme_submit_paynow_donation()
                 ]);
             }
         } elseif ($method === "stripe") {
-            \Stripe\Stripe::setApiKey(get_option('helpme_donations_stripe_live_publishable_key'));
+            $helpMeApiKeys = new HelpMeAppKeys();
+
+            \Stripe\Stripe::setApiKey($helpMeApiKeys->get_stripe_secret_key());
 
             // header('Content-Type: application/json');
 
@@ -212,7 +215,7 @@ function check_paynow_payment_status()
                 'status'     => 'completed',
                 'updated_at' => current_time('mysql')
             ], [
-                'donation_id' => $donation_id
+                'id' => $donation_id
             ]);
 
             wp_send_json_success(['message' => "Paid", 'donation_id' => $donation_id]);
@@ -221,11 +224,49 @@ function check_paynow_payment_status()
                 'status'     => 'failed',
                 'updated_at' => current_time('mysql')
             ], [
-                'donation_id' => $donation_id
+                'id' => $donation_id
             ]);
 
             wp_send_json_error(['message' => "Payment was cancelled", 'donation_id' => $donation_id]);
         }
+    } catch (Exception $error) {
+        wp_send_json_error(['message' => $error->getMessage() ?? 'Payment polling failed.']);
+    }
+}
+function update_donation_success_payment_status()
+{
+    global $wpdb;
+
+    $transaction_id = sanitize_text_field($_POST['transaction_id'] ?? '');
+
+    if (empty($transaction_id)) {
+        wp_send_json_error(['message' => 'Missing transaction_id.']);
+        return;
+    }
+
+    // Step 1: Find the donation by transaction_id
+    $donations_table = $wpdb->prefix . 'helpme_donations';
+    $donation_id = $wpdb->get_var($wpdb->prepare(
+        "SELECT id FROM $donations_table WHERE id = %s",
+        $transaction_id
+    ));
+
+    if (!$donation_id) {
+        wp_send_json_error(['message' => 'Donation not found for this poll_url.']);
+        return;
+    }
+
+    try {
+
+        // Step 4: Update donation status in DB
+        $wpdb->update($donations_table, [
+            'status'     => 'Paid',
+            'updated_at' => current_time('mysql')
+        ], [
+            'id' => $donation_id
+        ]);
+
+        wp_send_json_success(['message' => "Paid", 'donation_id' => $donation_id]);
     } catch (Exception $error) {
         wp_send_json_error(['message' => $error->getMessage() ?? 'Payment polling failed.']);
     }

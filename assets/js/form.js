@@ -551,7 +551,9 @@ jQuery(document).ready(function ($) {
               if (result.error) {
                 showMessage(result.error.message, "error");
               } else {
-                paymentCompleted(result.paymentIntent);
+                alert(response.data?.transaction_id);
+                updateAllDonationsPaymentStatus(response.data?.transaction_id);
+                paymentCompleted(response.data?.transaction_id);
               }
             });
         } else {
@@ -811,6 +813,28 @@ jQuery(document).ready(function ($) {
   function removeFormLoader() {
     const paymentContainer = form.find(".payment-form-container");
     paymentContainer.html("");
+  }
+
+  function updateAllDonationsPaymentStatus(transaction_id) {
+    $.ajax({
+      url: helpmeDonations.ajaxurl,
+      type: "POST",
+      data: {
+        action: "update_donation_success_payment_status",
+        nonce: helpmeDonations.nonce,
+        transaction_id: transaction_id,
+      },
+      success: function (response) {
+        if (response.success) {
+        } else {
+          showMessage(
+            response.data.message || "Payment processing failed",
+            "error"
+          );
+        }
+      },
+      error: function () {},
+    });
   }
 
   // Keyboard navigation
