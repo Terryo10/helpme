@@ -140,7 +140,7 @@ class ZimDonations_Gateway_PayPal
         $donation_data = array(
             'amount' => floatval($_POST['amount']),
             'currency' => sanitize_text_field($_POST['currency']),
-            'donation_id' => sanitize_text_field($_POST['donation_id']),
+            'donation_id' => sanitize_text_field($_POST['transaction_id']),
             'donor_name' => sanitize_text_field($_POST['donor_name']) ?? 'Unknown',
             'donor_email' => sanitize_email($_POST['donor_email']) ?? 'pikigene01@gmail.com'
         );
@@ -443,7 +443,7 @@ class ZimDonations_Gateway_PayPal
         return add_query_arg(array(
             'zim-donation' => 'success',
             'donation_id' => $donation_id
-        ), home_url());
+        ), get_permalink(get_option('helpme_donations_success_page')));
     }
 
     private function get_cancel_url($donation_id)

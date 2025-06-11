@@ -1,11 +1,11 @@
 jQuery(document).ready(function ($) {
-  
   const form = $(".helpme-donation-form");
   const stepIndicators = form.parent().find(".step");
   const formSteps = form.find(".form-step");
   const prevButton = form.find(".prev-button");
   const nextButton = form.find(".next-button");
   const messagesContainer = form.find(".form-messages");
+  let transaction_id = 0;
 
   let currentStep = 1;
   const totalSteps = 6; // Updated to 6 steps
@@ -581,6 +581,7 @@ jQuery(document).ready(function ($) {
         action: "paypal_create_order",
         nonce: helpmeDonations.nonce,
         gateway: "paypal",
+        transaction_id: transaction_id,
         ...formData,
       },
       success: function (response) {
@@ -671,6 +672,7 @@ jQuery(document).ready(function ($) {
             // Redirect to payment page
             window.location.href = response.data.redirect_url;
           } else if (response.data?.method === "paypal") {
+            transaction_id = response.data?.transaction_id;
             showMessage(
               response.data?.message || "",
 
@@ -716,6 +718,7 @@ jQuery(document).ready(function ($) {
       recurring_interval: form.find('select[name="recurring_interval"]').val(),
       anonymous: form.find('input[name="anonymous"]').val(),
       donation_id: generateDonationId(),
+      transaction_id: transaction_id,
     };
   }
 

@@ -191,8 +191,42 @@ final class HelpMeDonations
         add_action('wp_ajax_paypal_create_order', 'paypal_create_order');
         add_action('wp_ajax_check_paynow_payment_status', 'check_paynow_payment_status');
         add_action('wp_ajax_nopriv_helpme_submit_paynow_donation', 'helpme_submit_paynow_donation');
+        add_action('template_redirect', array($this, 'handle_zim_donation_success'));
     }
 
+
+    public function handle_zim_donation_success()
+    {
+
+        if (
+            isset($_GET['zim-donation'], $_GET['donation_id']) &&
+            $_GET['zim-donation'] === 'success'
+        ) {
+            $donation_id = trim(sanitize_text_field($_GET['donation_id'] ?? ''));
+
+
+            if (empty($donation_id)) {
+                return;
+            }
+
+            try {
+                global $wpdb;
+                $donations_table = $wpdb->prefix . 'helpme_donations';
+
+                // Update status to Paid
+                $wpdb->update($donations_table, [
+                    'status'     => 'Paid',
+                    'updated_at' => current_time('mysql')
+                ], [
+                    'id' => $donation_id
+                ]);
+
+                // wp_safe_redirect(remove_query_arg(['zim-donation', 'donation_id']));
+                // exit;
+            } catch (Exception $error) {
+            }
+        }
+    }
     /**
      * Register shortcodes
      */
