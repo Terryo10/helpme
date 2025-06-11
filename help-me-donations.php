@@ -221,8 +221,8 @@ final class HelpMeDonations
                     'id' => $donation_id
                 ]);
 
-                // wp_safe_redirect(remove_query_arg(['zim-donation', 'donation_id']));
-                // exit;
+                wp_safe_redirect(remove_query_arg(['zim-donation', 'donation_id']));
+                exit;
             } catch (Exception $error) {
             }
         }
