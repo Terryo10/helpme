@@ -1,5 +1,5 @@
 jQuery(document).ready(function ($) {
-  alert("js loaded");
+  
   const form = $(".helpme-donation-form");
   const stepIndicators = form.parent().find(".step");
   const formSteps = form.find(".form-step");
@@ -578,7 +578,7 @@ jQuery(document).ready(function ($) {
       url: helpmeDonations.ajaxurl,
       type: "POST",
       data: {
-        action: "ajax_create_order",
+        action: "paypal_create_order",
         nonce: helpmeDonations.nonce,
         gateway: "paypal",
         ...formData,

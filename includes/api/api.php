@@ -1,6 +1,11 @@
 <?php
 require_once HELPME_DONATIONS_PLUGIN_DIR . 'includes/api/app_keys.php';
-
+function paypal_create_order()
+{
+    $class_paypal =  new ZimDonations_Gateway_PayPal();
+    return $class_paypal->paypal_create_order();
+    wp_send_json_error(['message' => 'Tasvika Pano']);
+}
 function helpme_submit_paynow_donation()
 {
 
@@ -164,13 +169,9 @@ function helpme_submit_paynow_donation()
     }
 }
 
-function get_donation_success_url()
+function get_donation_success_url($donation_id = 0)
 {
-    $success_page_id = get_option('helpme_donations_success_page');
-    if ($success_page_id && get_post_status($success_page_id) === 'publish') {
-        return get_permalink($success_page_id);
-    }
-    return home_url(); // fallback
+    return add_query_arg('donation', $donation_id, get_permalink(get_option('helpme_donations_success_page')));
 }
 function get_donation_error_url()
 {
@@ -180,6 +181,8 @@ function get_donation_error_url()
     }
     return home_url(); // fallback
 }
+
+
 
 function check_paynow_payment_status()
 {

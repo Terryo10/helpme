@@ -8,7 +8,6 @@ if (!defined('ABSPATH')) {
 }
 
 require_once HELPME_DONATIONS_PLUGIN_DIR . 'includes/gateways/stripe.php';
-require_once HELPME_DONATIONS_PLUGIN_DIR . 'includes/gateways/class-paypal.php';
 require_once HELPME_DONATIONS_PLUGIN_DIR . 'includes/gateways/paynow.php';
 require_once HELPME_DONATIONS_PLUGIN_DIR . 'includes/gateways/class-inbucks.php';
 require_once HELPME_DONATIONS_PLUGIN_DIR . 'includes/gateways/class-zimswitch.php';
