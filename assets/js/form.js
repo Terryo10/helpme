@@ -684,6 +684,7 @@ jQuery(document).ready(function ($) {
             paymentCompleted(response.data);
           }
         } else if (response.data?.poll_url) {
+          transaction_id = response?.data?.transaction_id;
           showMessage(
             response.data.message || "Payment processing failed",
 
@@ -692,7 +693,7 @@ jQuery(document).ready(function ($) {
           );
         } else {
           showMessage(
-            response.data.message || "Payment processing failed",
+            response?.data?.message || "Payment processing failed",
             "error"
           );
         }
@@ -761,6 +762,7 @@ jQuery(document).ready(function ($) {
         data: {
           action: "check_paynow_payment_status",
           poll_url: pollUrl,
+          transaction_id: transaction_id,
           nonce: helpmeDonations.nonce,
         },
         success: function (response) {
